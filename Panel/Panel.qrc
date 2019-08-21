@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/Resources">
+        <file>Images/Client.png</file>
+        <file>Images/Exit.png</file>
+        <file>Images/Log.png</file>
+        <file>Images/NetworkConnection.png</file>
+        <file>Images/NetworkConnectionOff.png</file>
+        <file>Images/Software.png</file>
+        <file>Images/SystemObjects.png</file>
+        <file>Images/WindowsCascade.png</file>
+        <file>Images/WindowsTile.png</file>
+        <file>Images/WorldcoinManagerLogo.png</file>
+    </qresource>
+</RCC>

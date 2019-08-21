@@ -1,0 +1,8 @@
+1.0.0 Potato Killer 
+//   19-08-21
+
+/* 
+ * Library: Qt 5.13.1
+ * General: Initial Version
+ */
+ 
