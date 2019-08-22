@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS += KArchive \
+SUBDIRS += QuaZIP #\
           #Definitions \        
            #Qftp \
            #Tools \
@@ -10,4 +10,6 @@ SUBDIRS += KArchive \
            #SystemObject \
            #Software \
            #Client \
-           Panel
+           #Panel
+OTHER_FILES += common.pri \
+               .qmake.conf
