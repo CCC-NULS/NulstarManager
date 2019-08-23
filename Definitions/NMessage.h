@@ -1,14 +1,14 @@
-#ifndef WCMESSAGE_H
-#define WCMESSAGE_H
+#ifndef NMESSAGE_H
+#define NMESSAGE_H
 
 #include <QString>
 
 #include "Definitions.h"
 
-class WCMessage
+class NMessage
 {
   public:            
-    WCMessage(int type = 0, const QString& text = QString(), const QString& helpText = QString());
+    NMessage(int type = 0, const QString& text = QString(), const QString& helpText = QString());
     enum MessageType { InfoMessage, SuccessMessage, ErrorMessage, WarningMessage, BugMessage };
     int type() const { return _type; }
     QString text() const { return _text; }
@@ -20,4 +20,4 @@ class WCMessage
     QString _text;
 };
 
-#endif // PZMESSAGE_H
+#endif // NMESSAGE_H

@@ -1,5 +1,5 @@
-#ifndef WCCONSTANTS_H
-#define WCCONSTANTS_H
+#ifndef NCONSTANTS_H
+#define NCONSTANTS_H
 
 #include <QColor>
 #include <QObject>
@@ -7,7 +7,7 @@
 
 #include "Definitions.h"
 
-class WCConstants
+class NConstants
 {
   public:
     enum CustomRegExp { HostRegExp, IdentifierRegExp, IntRegExp, NameRegExp, PortRegExp, ResourceRegExp, VersionRegExp, SerialNumberExp, MacExp };
@@ -25,20 +25,14 @@ class WCConstants
     static QColor orange() { return QColor(234, 185, 14); }
     static QColor white() { return QColor(255, 255, 255); }
     static QString colorToRgbText(const QColor& color);
-    static QString configurationFile() { return "PulzarManager.cfg"; }
-    static QString defaultDBHost() { return "127.0.0.1"; }
-    static QString defaultDBName() { return "PulzarManagerDB"; }
-    static QString defaultDBPassword() { return ""; }
-    static QString defaultDBPort() { return "3306"; }
-    static QString defaultDBUser() { return "PulzarManager"; }
-    static QString defaultFSDirectory() { return "Releases"; }
+    static QString configurationFile() { return "NulstarManager.cfg"; }
+    static QString defaultFSDirectory() { return ""; }
     static QString defaultFSHost() { return "127.0.0.1"; }
     static QString defaultFSPort() { return "21"; }
-    static QString defaultFSUser() { return "PulzarManager"; }
+    static QString defaultFSUser() { return "NulstarManager"; }
     static QString defaultFSPassword() { return ""; }
     static QString defaultMacAny() { return "00:00:00:00:00:00"; }
-    static QString defaultMacUnknown() { return "00:00:00:00:00:01"; }
-    static QString mainDBConnection() { return "MainConnection"; }
+    static QString defaultMacUnknown() { return "00:00:00:00:00:01"; }    
 };
 
-#endif // WCCONSTANTS_H
+#endif // NCONSTANTS_H

@@ -1,6 +1,6 @@
-#include "WCConstants.h"
+#include "NConstants.h"
 
-QString WCConstants::colorToRgbText(const QColor& color)
+QString NConstants::colorToRgbText(const QColor& color)
 {
   QString blue = QString::number(color.blue());
   QString green = QString::number(color.green());

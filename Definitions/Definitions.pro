@@ -1,15 +1,22 @@
-QT += gui
-CONFIG += static
-TARGET = Definitions
+# Base Settings
+include($$TOP_SRCDIR/common.pri)
+
+# Project Settings
+
+QT += gui widgets
+CONFIG += c++11 skip_target_version_ext
 TEMPLATE = lib
+TARGET = Definitions
+
 DEFINES += DEFINITIONS_LIBRARY
-SOURCES += WCVersion.cpp \
-    WCConstants.cpp \
-    WCMessage.cpp \
-    WCMessagePool.cpp
+DESTDIR=$$LIBRARIES_OUTDIR
+
+
+SOURCES += NConstants.cpp \
+    NMessage.cpp \
+    NMessagePool.cpp
 HEADERS += Definitions.h \
-           WCVersion.h \
-    WCConstants.h \
-    WCMessage.h \
-    WCMessagePool.h
-DESTDIR = ../../../Build/WorldcoinManager
+    NConstants.h \
+    NMessage.h \
+    NMessagePool.h
+

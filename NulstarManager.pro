@@ -1,7 +1,7 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS += QuaZIP #\
-          #Definitions \        
+SUBDIRS += QuaZIP \
+           Definitions #\
            #Qftp \
            #Tools \
            #About \

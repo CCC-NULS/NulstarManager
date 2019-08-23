@@ -11,7 +11,7 @@ class WCVersion : public QObject
   Q_OBJECT
 
   public:
-    explicit WCVersion(QObject* parent = 0);
+    explicit WCVersion(QObject* parent = nullptr);
 
     static QString fileRegion(const QString& fileName);
     static QString fileToObject(int os, const QString& fileName);
