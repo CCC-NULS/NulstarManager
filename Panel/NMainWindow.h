@@ -1,16 +1,17 @@
-#ifndef WCMAINWINDOW_H
-#define WCMAINWINDOW_H
+#ifndef NMAINWINDOW_H
+#define NMAINWINDOW_H
 
-#include <WCMessagePool.h>
+#include <NMessagePool.h>
 #include <QMainWindow>
 #include <QMap>
+#include "NulstarManagerVersion.h"
 
-class WCAbout;
-class WCClient;
-class WCConnector;
-class WCLog;
-class WCSoftware;
-class WCSystemObject;
+class NAbout;
+class NClient;
+class NConnector;
+class NLog;
+class NSoftware;
+class NSystemObject;
 class QAction;
 class QCloseEvent;
 class QDockWidget;
@@ -20,25 +21,25 @@ class QMdiSubWindow;
 class QMenu;
 class QToolBar;
 
-class WCMainWindow : public QMainWindow
+class NMainWindow : public QMainWindow
 {
   Q_OBJECT
 
   public:
-    explicit WCMainWindow(QWidget *parent = 0);
-    ~WCMainWindow();
+    explicit NMainWindow(QWidget *parent = nullptr);
+    ~NMainWindow();
 
   protected:
     void closeEvent(QCloseEvent* event);
 
   private:
-    WCAbout* _About;
-    WCClient* _Client;
-    WCConnector* _Connector;
-    WCMessagePool _MessagePool;
-    WCLog* _Log;
-    WCSoftware* _Software;
-    WCSystemObject* _SystemObject;
+    NAbout* _About;
+//**    WCClient* _Client;
+//**    WCConnector* _Connector;
+    NMessagePool _MessagePool;
+//**    WCLog* _Log;
+//**    WCSoftware* _Software;
+//**    WCSystemObject* _SystemObject;
     QAction* _about;
     QAction* _cascade;
     QAction* _client;
@@ -73,7 +74,7 @@ class WCMainWindow : public QMainWindow
     void moveToCenter(QMdiSubWindow* subWindow);
 
   private slots:
-    void connectionStatusChanged();
+   // void connectionStatusChanged();
     void showAbout();
     void showClient();
     void showConnect();
@@ -85,4 +86,4 @@ class WCMainWindow : public QMainWindow
     void processEvent(const QString& message, int type);
 };
 
-#endif // WCMAINWINDOW_H
+#endif // NMAINWINDOW_H

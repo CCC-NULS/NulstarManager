@@ -1,19 +1,19 @@
-#ifndef WCSPLASHSCREEN_H
-#define WCSPLASHSCREEN_H
+#ifndef NSPLASHSCREEN_H
+#define NSPLASHSCREEN_H
 
 #include <QDialog>
 #include <QPixmap>
 #include <QString>
 
 #include "Tools.h"
-#include "ui_WCSplashScreen.h"
+#include <ui_NSplashScreen.h>
 
-class  WCSplashScreen :  public QDialog, Ui::uiSplashScreen
+class  NSplashScreen :  public QDialog, Ui::uiSplashScreen
 {
   Q_OBJECT
 
   public:
-    explicit WCSplashScreen(QWidget* parent = 0);
+    explicit NSplashScreen(QWidget* parent = nullptr);
 
     void moveToCenter();
     void setPixmap(const QPixmap& image) { lblSplash->setPixmap(image); }
@@ -28,4 +28,4 @@ class  WCSplashScreen :  public QDialog, Ui::uiSplashScreen
     void closing();
 };
 
-#endif // WCSPLASHSCREEN_H
+#endif // NSPLASHSCREEN_H

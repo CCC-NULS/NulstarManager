@@ -1,16 +1,21 @@
-QT += network gui sql widgets
-CONFIG += static
+# Base Settings
+include($$TOP_SRCDIR/common.pri)
+
+QT += gui widgets
+CONFIG += c++11 skip_target_version_ext
 DEFINES += ABOUT_LIBRARY
 TARGET = About
 TEMPLATE = lib
 RESOURCES += About.qrc
-SOURCES += WCAbout.cpp
-HEADERS += WCAbout.h \
+SOURCES += NAbout.cpp
+HEADERS += NAbout.h \
     About.h
-DESTDIR = ../../../Build/WorldcoinManager
-INCLUDEPATH += ../../../Build/WorldcoinManager/Tools \
+DESTDIR=$$LIBRARIES_OUTDIR
+INCLUDEPATH += $$TOP_BUILDDIR/Tools \
                ../Definitions \
                ../Tools
-LIBS += -L../../../Build/WorldcoinManager \
+LIBS += -L$$DESTDIR \
         -lDefinitions \
         -lTools
+
+

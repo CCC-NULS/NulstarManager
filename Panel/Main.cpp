@@ -4,28 +4,21 @@
 #include <QPixmapCache>
 #include <QString>
 #include <QTextCodec>
-#include <WCConstants.h>
-#include <WCSplashScreen.h>
-#include <WCVersion.h>
+#include <NConstants.h>
+#include <NSplashScreen.h>
 #include <JlCompress.h>
-#include "WCMainWindow.h"
+#include "NMainWindow.h"
+#include "NulstarManagerVersion.h"
 
 int main(int argc, char *argv[])
 {
   QApplication managerApp(argc, argv);
-  Q_INIT_RESOURCE(About);
-  Q_INIT_RESOURCE(Client);
-  Q_INIT_RESOURCE(Connector);
-  Q_INIT_RESOURCE(Log);
-  Q_INIT_RESOURCE(Panel);
-  Q_INIT_RESOURCE(Software);
-  Q_INIT_RESOURCE(SystemObject);
 
   managerApp.addLibraryPath(managerApp.applicationDirPath() + "/SystemPlugins");
   QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-  managerApp.setApplicationName("Worldcoin Manager");
-  managerApp.setOrganizationDomain("worldcoinalliance.net");
-  managerApp.setOrganizationName("Worldcoin Alliance");
+  managerApp.setApplicationName("Nulstar Manager");
+  managerApp.setOrganizationDomain("nulstar.com");
+  managerApp.setOrganizationName("Nulstar");
   managerApp.setQuitOnLastWindowClosed(false);
 
   QString style = QString("* { font: 75 8pt \"Cantarell\" }"
@@ -129,19 +122,19 @@ int main(int argc, char *argv[])
                " QPushButton:!flat:pressed { "
                " background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #dadbde, stop: 1 #f6f7fa); }"
 
-               ).arg(WCConstants::colorToRgbText(WCConstants::orange())).arg(WCConstants::colorToRgbText(WCConstants::lightBlue()));
+               ).arg(NConstants::colorToRgbText(NConstants::orange())).arg(NConstants::colorToRgbText(NConstants::lightBlue()));
 
   managerApp.setStyleSheet(style);
   JlCompress::extractDir("ww", qApp->applicationDirPath()  );
-  WCMainWindow panel;
-  WCSplashScreen splash;
+  NMainWindow panel;
+  NSplashScreen splash;
   splash.setWindowFlags(Qt::FramelessWindowHint);
   QPixmap* banner = QPixmapCache::find("Splash");
   splash.setStyleSheet("background-color: rgb(0,0,0)");
   splash.setPixmap(*banner);
   splash.setSoftwareName(managerApp.applicationName());
-  splash.setVersion(WCVersion::worldcoinManagerVersion());
-  splash.setVersionAlias(WCVersion::worldcoinManagerAlias());
+  splash.setVersion(APP_VERSION);
+  splash.setVersionAlias(APP_VERSION_NAME);
   splash.setActionText(QObject::tr("Loading ..."));
   splash.showSplash(3);
 

@@ -1,27 +1,36 @@
-QT += gui network widgets
-CONFIG += static
+# Base Settings
+include($$TOP_SRCDIR/common.pri)
+
+QT += network gui widgets
+CONFIG += c++11 skip_target_version_ext
 DEFINES += TOOLS_LIBRARY
 TARGET = Tools
 TEMPLATE = lib
-SOURCES += WCValidatorCreator.cpp \
+SOURCES += NValidatorCreator.cpp \
     VAResourceValidator.cpp \
     VAStringValidator.cpp \
     VAHostValidator.cpp \
     VAIntValidator.cpp \
-    WCSplashScreen.cpp \
+    NSplashScreen.cpp \
     DLProgressBar.cpp \
     DLCheckBox.cpp
 HEADERS += Tools.h \
-    WCValidatorCreator.h \
+    NValidatorCreator.h \
     VAResourceValidator.h \
     VAStringValidator.h \
     VAHostValidator.h \
     VAIntValidator.h \
-    WCSplashScreen.h \
+    NSplashScreen.h \
     DLProgressBar.h \
     DLCheckBox.h
-FORMS += WCSplashScreen.ui
-DESTDIR = ../../../Build/WorldcoinManager
-INCLUDEPATH += ../Definitions
-LIBS += -L../../../Build/WorldcoinManager \
+
+FORMS += NSplashScreen.ui
+DESTDIR=$$LIBRARIES_OUTDIR
+INCLUDEPATH += $$TOP_BUILDDIR/$$TARGET \
+        ../Definitions
+
+LIBS += -L$$DESTDIR \
         -lDefinitions
+
+
+

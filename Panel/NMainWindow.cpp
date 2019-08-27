@@ -1,9 +1,9 @@
-#include <WCAbout.h>
-#include <WCClient.h>
-#include <WCConnector.h>
-#include <WCLog.h>
-#include <WCSoftware.h>
-#include <WCSystemObject.h>
+#include <NAbout.h>
+//#include <NClient.h>
+//#include <NConnector.h>
+//#include <NLog.h>
+//#include <NSoftware.h>
+//#include <NSystemObject.h>
 #include <QAction>
 #include <QApplication>
 #include <QCloseEvent>
@@ -26,12 +26,12 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-#include "WCMainWindow.h"
+#include "NMainWindow.h"
 
-WCMainWindow::WCMainWindow(QWidget *parent)
+NMainWindow::NMainWindow(QWidget *parent)
             : QMainWindow(parent)
 {
-  setWindowTitle("Worldcoind Manager");
+  setWindowTitle("Nulstar Manager");
   setWindowIcon(QIcon(":/Resources/Images/WorldcoinManagerLogo.png"));
 
   createActions();
@@ -47,18 +47,18 @@ WCMainWindow::WCMainWindow(QWidget *parent)
   _log->activate(QAction::Trigger);
 }
 
-WCMainWindow::~WCMainWindow()
+NMainWindow::~NMainWindow()
 {
 
 }
 
-void WCMainWindow::closeEvent(QCloseEvent* event)
+void NMainWindow::closeEvent(QCloseEvent* event)
 {
   event->accept();
   qApp->quit();
 }
-
-void WCMainWindow::connectionStatusChanged()
+/*
+void NMainWindow::connectionStatusChanged()
 {
   if(_Connector->status())
     _connectionStatus->setPixmap(QPixmap(":/Resources/Images/Connected.png").scaled(18,18));
@@ -67,12 +67,12 @@ void WCMainWindow::connectionStatusChanged()
   //QStringList dbParams = _Connector->dbParams();
   QStringList ftpParams = _Connector->ftpParams();
   _Software->setFtpParams(ftpParams);
-}
+}*/
 
-void WCMainWindow::createActions()
+void NMainWindow::createActions()
 {
-  _about = new QAction(tr("&Acerca De"), this);
-  _about->setIcon(QIcon(":/Resources/Images/WorldcoinManagerLogo.png"));
+  _about = new QAction(tr("&About"), this);
+  _about->setIcon(QIcon(":/Resources/Images/NulstarManagerLogo.png"));
   _about->setShortcut(QKeySequence(Qt::Key_F12));
   _about->setStatusTip(tr("Show information about the product"));
   _about->setObjectName("About");
@@ -127,7 +127,7 @@ void WCMainWindow::createActions()
   _log->setCheckable(true);
 }
 
-void WCMainWindow::createConnections()
+void NMainWindow::createConnections()
 {
   connect(_exit, SIGNAL(triggered()), qApp, SLOT(quit()));
   connect(_about, SIGNAL(triggered()), this, SLOT(showAbout()));
@@ -138,33 +138,33 @@ void WCMainWindow::createConnections()
   connect(_connect, SIGNAL(triggered()), this, SLOT(showConnect()));
   connect(_software, SIGNAL(triggered()), this, SLOT(showSoftware()));
   connect(_systemObject, SIGNAL(triggered()), this, SLOT(showSystemObject()));
-  connect(_Client, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
-  connect(_Client, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
-  connect(_Connector, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
-  connect(_Connector, SIGNAL(connected()), this, SLOT(connectionStatusChanged()));
-  connect(_Connector, SIGNAL(disconnected()), this, SLOT(connectionStatusChanged()));
-  connect(_Software, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
-  connect(_Software, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
-  connect(_SystemObject, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
+//  connect(_Client, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
+//  connect(_Client, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
+//  connect(_Connector, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
+ // connect(_Connector, SIGNAL(connected()), this, SLOT(connectionStatusChanged()));
+//  connect(_Connector, SIGNAL(disconnected()), this, SLOT(connectionStatusChanged()));
+//  connect(_Software, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
+//  connect(_Software, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
+//  connect(_SystemObject, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
 }
 
-void WCMainWindow::createDocks()
+void NMainWindow::createDocks()
 {
   _logDock = new QDockWidget(tr("Logs"), this);
   _logDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
-  _logDock->setWidget(_Log);
+//  _logDock->setWidget(_Log);
   _logDock->setFeatures(QDockWidget::DockWidgetMovable);
   addDockWidget(Qt::BottomDockWidgetArea, _logDock);
   _logDock->hide();
 }
 
-void WCMainWindow::createMdiArea()
+void NMainWindow::createMdiArea()
 {
   _centralWidget = new QMdiArea(this);
   setCentralWidget(_centralWidget);
 }
 
-void WCMainWindow::createMenus()
+void NMainWindow::createMenus()
 {
   _file = menuBar()->addMenu(tr("&File"));
   _file->addAction(_connect);
@@ -185,17 +185,17 @@ void WCMainWindow::createMenus()
   _help->addAction(_about);
 }
 
-void WCMainWindow::createObjects()
+void NMainWindow::createObjects()
 {
-  _About = new WCAbout();
-  _Client = new WCClient();
-  _Connector = new WCConnector(); // Parent is attached when action is executed
-  _Log = new WCLog(this);
-  _Software = new WCSoftware();
-  _SystemObject = new WCSystemObject();
+  _About = new NAbout(APP_VERSION, APP_VERSION_NAME);
+ // _Client = new NClient();
+ // _Connector = new NConnector(); // Parent is attached when action is executed
+ // _Log = new NLog(this);
+//  _Software = new NSoftware();
+//  _SystemObject = new NSystemObject();
 }
 
-void WCMainWindow::createStatusbar()
+void NMainWindow::createStatusbar()
 {
   _connectionStatus = new QLabel (this);
   _connectionStatus->setPixmap(QPixmap(":/Resources/Images/NetworkConnectionOff").scaled(18,18));
@@ -205,7 +205,7 @@ void WCMainWindow::createStatusbar()
   statusBar()->setSizeGripEnabled(true);
 }
 
-void WCMainWindow::createToolbars()
+void NMainWindow::createToolbars()
 {
   _filetb = addToolBar(tr("&File"));
   _filetb->addAction(_connect);
@@ -226,12 +226,12 @@ void WCMainWindow::createToolbars()
   _helptb->addAction(_about);
 }
 
-void WCMainWindow::initObjects()
+void NMainWindow::initObjects()
 {
-  _Connector->loadSettings();
+  //_Connector->loadSettings();
 }
 
-void WCMainWindow::moveToCenter(QMdiSubWindow* subWindow)
+void NMainWindow::moveToCenter(QMdiSubWindow* subWindow)
 {
   Q_ASSERT(subWindow);
 
@@ -251,7 +251,7 @@ void WCMainWindow::moveToCenter(QMdiSubWindow* subWindow)
   subWindow->move(x,y);
 }
 
-void WCMainWindow::showAbout()
+void NMainWindow::showAbout()
 {
   _About->setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
   _About->showSplash();
@@ -272,16 +272,16 @@ void WCMainWindow::showAbout()
   _About->move(x,y);
 }
 
-void WCMainWindow::showClient()
+void NMainWindow::showClient()
 {
-  if(_loadedSubWindows.contains(_client))
+/*  if(_loadedSubWindows.contains(_client))
   {
     _loadedSubWindows.value(_client)->show();
     _Client->show();
   }
   else
   {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Client, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
+    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Client, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
     subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
     subWindow->setWindowTitle(_client->text().remove("&"));
     subWindow->setWindowIcon(_client->icon());
@@ -290,19 +290,19 @@ void WCMainWindow::showClient()
     _Client->show();
     _loadedSubWindows[_client] = subWindow;
   }
-  _Client->loadTable();
+  _Client->loadTable();*/
 }
 
-void WCMainWindow::showConnect()
+void NMainWindow::showConnect()
 {
-  if(_loadedSubWindows.contains(_connect))
+ /* if(_loadedSubWindows.contains(_connect))
   {
     _loadedSubWindows.value(_connect)->show();
     _Connector->show();
   }
   else
   {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Connector, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
+    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Connector, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
     subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
     subWindow->setWindowTitle(_connect->text().remove("&"));
     subWindow->setWindowIcon(_connect->icon());
@@ -314,30 +314,30 @@ void WCMainWindow::showConnect()
     subWindow->setMinimumSize(subWindow->size());
     subWindow->setMaximumSize(subWindow->size());
     _loadedSubWindows[_connect] = subWindow;
-  }
+  }*/
 }
 
-void WCMainWindow::showLog(bool show)
+void NMainWindow::showLog(bool show)
 {
   _logDock->setVisible(show);
 }
 
-void WCMainWindow::showMax()
+void NMainWindow::showMax()
 {
   showMaximized();
   showConnect();
 }
 
-void WCMainWindow::showSoftware()
+void NMainWindow::showSoftware()
 {
-  if(_loadedSubWindows.contains(_software))
+ /* if(_loadedSubWindows.contains(_software))
   {
     _loadedSubWindows.value(_software)->show();
     _Software->show();
   }
   else
   {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Software, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
+    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Software, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
     subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
     subWindow->setWindowTitle(_software->text().remove("&"));
     subWindow->setWindowIcon(_software->icon());
@@ -346,19 +346,19 @@ void WCMainWindow::showSoftware()
     _Software->show();
     _loadedSubWindows[_software] = subWindow;
   }
-  _Software->loadTable();
+  _Software->loadTable();*/
 }
 
-void WCMainWindow::showSystemObject()
+void NMainWindow::showSystemObject()
 {
-  if(_loadedSubWindows.contains(_systemObject))
+/*  if(_loadedSubWindows.contains(_systemObject))
   {
     _loadedSubWindows.value(_systemObject)->show();
     _SystemObject->show();
   }
   else
   {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_SystemObject, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
+    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_SystemObject, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
     subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
     subWindow->setWindowTitle(_systemObject->text().remove("&"));
     subWindow->setWindowIcon(_systemObject->icon());
@@ -367,19 +367,19 @@ void WCMainWindow::showSystemObject()
     _SystemObject->show();
     _loadedSubWindows[_systemObject] = subWindow;
   }
-  _SystemObject->loadTable();
+  _SystemObject->loadTable();*/
 }
 
-void WCMainWindow::processEvent(int code)
+void NMainWindow::processEvent(int code)
 {
-  WCMessage message = _MessagePool.message(code);
+  NMessage message = _MessagePool.message(code);
   statusBar()->showMessage(message.text());
-  _Log->appendEntry(code, message);
+ // _Log->appendEntry(code, message);
 }
 
-void WCMainWindow::processEvent(const QString& message, int type)
+void NMainWindow::processEvent(const QString& message, int type)
 {
-  WCMessage mes(type, message);
+  NMessage mes(type, message);
   statusBar()->showMessage(message);
-  _Log->appendEntry(9000000, mes);
+ // _Log->appendEntry(9000000, mes);
 }

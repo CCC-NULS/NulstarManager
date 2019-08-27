@@ -1,15 +1,15 @@
 TEMPLATE = subdirs
 CONFIG += ordered
 SUBDIRS += QuaZIP \
-           Definitions #\
+           Definitions \
+           Tools \
+           About \
            #Qftp \
-           #Tools \
-           #About \
            #Connector \
            #Log \
            #SystemObject \
            #Software \
            #Client \
-           #Panel
+           Panel
 OTHER_FILES += common.pri \
                .qmake.conf

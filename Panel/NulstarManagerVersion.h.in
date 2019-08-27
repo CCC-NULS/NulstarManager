@@ -1,0 +1,5 @@
+#pragma once
+
+#define APP_VERSION '"$$APP_VERSION"'
+#define APP_VERSION_NAME '"$$APP_VERSION_NAME"'
+

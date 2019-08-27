@@ -1,36 +1,48 @@
-QT += gui network widgets sql
-TARGET = WorldcoinManager
+include($$TOP_SRCDIR/common.pri)
+
+APP_VERSION=1.0.0
+APP_VERSION_NAME=Potato Killer
+
+QT += gui network widgets
+CONFIG += c++11 skip_target_version_ext
+TARGET = NulstarManager
+QMAKE_SUBSTITUTES += NulstarManagerVersion.h.in
 TEMPLATE = app
 SOURCES += Main.cpp \
-           WCMainWindow.cpp
-HEADERS += WCMainWindow.h
-DESTDIR = ../../../Applications/WorldcoinManager
+           NMainWindow.cpp
+HEADERS += NMainWindow.h
 RESOURCES += Panel.qrc
-INCLUDEPATH += ../Definitions \
+INCLUDEPATH += $$TOP_BUILDDIR/Tools \
+               ../Definitions \
                ../About \
                ../Client \
                ../Connector \
                ../Log \
+               ../QuaZIP \
                ../Tools \
                ../Software \
-               ../SystemObject \
-               ../../../Libraries/Quazip/include \
-               ../../../Build/WorldcoinManager/Tools \
-               ../../../Build/WorldcoinManager/Client \
-               ../../../Build/WorldcoinManager/Connector \
-               ../../../Build/WorldcoinManager/Log \
-               ../../../Build/WorldcoinManager/Software \
-               ../../../Build/WorldcoinManager/SystemObject
-LIBS += -L../../../Build/WorldcoinManager \
-      -L../../../Data/Development/Libraries/Quazip/lib \
-      -lquazip \
+               ../SystemObject #\
+            #   ../../../Libraries/Quazip/include \
+            #   ../../../Build/NulstarManager/Tools \
+            #   ../../../Build/NulstarManager/Client \
+            #   ../../../Build/NulstarManager/Connector \
+            #   ../../../Build/NulstarManager/Log \
+            #   ../../../Build/NulstarManager/Software \
+            #   ../../../Build/NulstarManager/SystemObject
+LIBS += -L$$DESTDIR \
+#-L../../../Build/NulstarManager \
+      #-L../../../Data/Development/Libraries/Quazip/lib \
+      -lQuaZIP \
       -lDefinitions \
       -lAbout \
-      -lClient \
-      -lConnector \
-      -lLog \
-      -lSoftware \
-      -lTools \
-      -lSystemObject
+      #-lClient \
+      #-lConnector \
+      #-lLog \
+      #-lSoftware \
+      -lTools #\
+     # -lSystemObject
+
+
+
 
 

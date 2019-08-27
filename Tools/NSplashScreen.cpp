@@ -2,16 +2,16 @@
 #include <QSize>
 #include <QTimer>
 
-#include "WCSplashScreen.h"
+#include "NSplashScreen.h"
 
-WCSplashScreen::WCSplashScreen(QWidget* parent)
+NSplashScreen::NSplashScreen(QWidget* parent)
               : QDialog(parent)
 {
   setupUi(this);
   moveToCenter();
 }
 
-void WCSplashScreen::moveToCenter()
+void NSplashScreen::moveToCenter()
 {
   QDesktopWidget* desktop = QApplication::desktop();
   int screenWidth, width;
@@ -30,7 +30,7 @@ void WCSplashScreen::moveToCenter()
   move ( x, y );
 }
 
-void WCSplashScreen::showSplash(int time)
+void NSplashScreen::showSplash(int time)
 {
   show();
   if(time)
