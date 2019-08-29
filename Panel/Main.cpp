@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
                ).arg(NConstants::colorToRgbText(NConstants::orange())).arg(NConstants::colorToRgbText(NConstants::lightBlue()));
 
   managerApp.setStyleSheet(style);
-  JlCompress::extractDir("ww", qApp->applicationDirPath()  );
+  //JlCompress::extractDir("ww", qApp->applicationDirPath()  );
   NMainWindow panel;
   NSplashScreen splash;
   splash.setWindowFlags(Qt::FramelessWindowHint);
@@ -138,6 +138,6 @@ int main(int argc, char *argv[])
   splash.setActionText(QObject::tr("Loading ..."));
   splash.showSplash(3);
 
-  QObject::connect(&splash, SIGNAL(closing()), &panel, SLOT(showMax()));
+  QObject::connect(&splash, SIGNAL(closing()), &panel, SLOT(show()));
   return managerApp.exec();
 }
