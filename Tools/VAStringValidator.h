@@ -9,12 +9,12 @@
 
 class QRegExpValidator;
 
-class VAStringValidator : public QValidator
+class TOOLSSHARED_EXPORT VAStringValidator : public QValidator
 {
   Q_OBJECT
 
   public:
-    VAStringValidator(const QString& regExpString, qint64 min = 0, qint64 max = 0, QObject *parent = 0);
+    VAStringValidator(const QString& regExpString, qint64 min = 0, qint64 max = 0, QObject *parent = nullptr);
 
     State validate(QString& input, int& pos) const;
 

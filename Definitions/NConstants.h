@@ -7,7 +7,7 @@
 
 #include "Definitions.h"
 
-class NConstants
+class DEFINITIONSSHARED_EXPORT NConstants
 {
   public:
     enum CustomRegExp { HostRegExp, IdentifierRegExp, IntRegExp, NameRegExp, PortRegExp, ResourceRegExp, VersionRegExp, SerialNumberExp, MacExp };

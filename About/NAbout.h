@@ -7,7 +7,7 @@
 
 #include "About.h"
 
-class NAbout : public QWidget
+class ABOUTSHARED_EXPORT NAbout : public QWidget
 {
   Q_OBJECT
 

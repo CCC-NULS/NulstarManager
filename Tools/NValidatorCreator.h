@@ -10,7 +10,7 @@ class QLineEdit;
 class QObject;
 class QValidator;
 
-class NValidatorCreator
+class TOOLSSHARED_EXPORT NValidatorCreator
 {
   public:
     explicit NValidatorCreator();

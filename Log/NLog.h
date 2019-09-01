@@ -10,7 +10,7 @@
 
 class QStandardItemModel;
 
-class NLog : public QWidget, private Ui::uiLog
+class LOGSHARED_EXPORT NLog : public QWidget, private Ui::uiLog
 {
   Q_OBJECT
 

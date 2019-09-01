@@ -9,7 +9,7 @@
 
 class QRegExpValidator;
 
-class VAResourceValidator : public QValidator
+class TOOLSSHARED_EXPORT VAResourceValidator : public QValidator
 {
   Q_OBJECT
 

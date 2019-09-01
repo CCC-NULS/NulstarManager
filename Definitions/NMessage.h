@@ -5,7 +5,7 @@
 
 #include "Definitions.h"
 
-class NMessage
+class DEFINITIONSSHARED_EXPORT NMessage
 {
   public:            
     NMessage(int type = 0, const QString& text = QString(), const QString& helpText = QString());

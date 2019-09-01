@@ -7,7 +7,7 @@
 #include "Definitions.h"
 #include "NMessage.h"
 
-class NMessagePool
+class DEFINITIONSSHARED_EXPORT NMessagePool
 {
   public:
     explicit NMessagePool();

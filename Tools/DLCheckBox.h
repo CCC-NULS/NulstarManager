@@ -8,7 +8,7 @@
 
 #include "Tools.h"
 
-class DLCheckBox : public QStyledItemDelegate
+class TOOLSSHARED_EXPORT DLCheckBox : public QStyledItemDelegate
 {
   Q_OBJECT
 

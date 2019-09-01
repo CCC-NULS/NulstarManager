@@ -8,7 +8,7 @@
 #include "Tools.h"
 #include <ui_NSplashScreen.h>
 
-class  NSplashScreen :  public QDialog, Ui::uiSplashScreen
+class TOOLSSHARED_EXPORT NSplashScreen :  public QDialog, Ui::uiSplashScreen
 {
   Q_OBJECT
 

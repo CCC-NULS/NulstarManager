@@ -8,7 +8,7 @@
 
 #include "Tools.h"
 
-class DLProgressBar : public QStyledItemDelegate
+class TOOLSSHARED_EXPORT DLProgressBar : public QStyledItemDelegate
 {
   Q_OBJECT
 

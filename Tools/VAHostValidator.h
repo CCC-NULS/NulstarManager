@@ -9,7 +9,7 @@
 
 class QRegExpValidator;
 
-class VAHostValidator : public QValidator
+class TOOLSSHARED_EXPORT VAHostValidator : public QValidator
 {
   Q_OBJECT
 

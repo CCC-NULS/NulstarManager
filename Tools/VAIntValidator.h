@@ -6,7 +6,7 @@
 
 #include "Tools.h"
 
-class VAIntValidator : public QValidator
+class TOOLSSHARED_EXPORT VAIntValidator : public QValidator
 {
   Q_OBJECT
 
