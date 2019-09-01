@@ -1,7 +1,7 @@
 #include <NAbout.h>
 //#include <NClient.h>
 //#include <NConnector.h>
-//#include <NLog.h>
+#include <NLog.h>
 //#include <NSoftware.h>
 //#include <NSystemObject.h>
 #include <QAction>
@@ -57,17 +57,6 @@ void NMainWindow::closeEvent(QCloseEvent* event)
   event->accept();
   qApp->quit();
 }
-/*
-void NMainWindow::connectionStatusChanged()
-{
-  if(_Connector->status())
-    _connectionStatus->setPixmap(QPixmap(":/Resources/Images/Connected.png").scaled(18,18));
-  else
-    _connectionStatus->setPixmap(QPixmap(":/Resources/Images/NetworkConnectionOff.png").scaled(18,18));
-  //QStringList dbParams = _Connector->dbParams();
-  QStringList ftpParams = _Connector->ftpParams();
-  _Software->setFtpParams(ftpParams);
-}*/
 
 void NMainWindow::createActions()
 {
@@ -94,12 +83,6 @@ void NMainWindow::createActions()
   _exit->setShortcut(QKeySequence(Qt::Key_F4));
   _exit->setStatusTip(tr("Exit program"));
   _exit->setObjectName("Exit");
-
-  _connect = new QAction(tr("Co&nnection"), this);
-  _connect->setIcon(QIcon(":/Resources/Images/NetworkConnection.png"));
-  _connect->setShortcut(QKeySequence(Qt::Key_F5));
-  _connect->setStatusTip(tr("Connect to server"));
-  _connect->setObjectName("Connect");
 
   _systemObject = new QAction(tr("&Objects"), this);
   _systemObject->setIcon(QIcon(":/Resources/Images/SystemObjects.png"));
@@ -135,14 +118,10 @@ void NMainWindow::createConnections()
   connect(_client, SIGNAL(triggered()), this, SLOT(showClient()));
   connect(_tile, SIGNAL(triggered()), _centralWidget, SLOT(tileSubWindows()));
   connect(_log, SIGNAL(triggered(bool)), this, SLOT(showLog(bool)));
-  connect(_connect, SIGNAL(triggered()), this, SLOT(showConnect()));
   connect(_software, SIGNAL(triggered()), this, SLOT(showSoftware()));
   connect(_systemObject, SIGNAL(triggered()), this, SLOT(showSystemObject()));
 //  connect(_Client, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
 //  connect(_Client, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
-//  connect(_Connector, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
- // connect(_Connector, SIGNAL(connected()), this, SLOT(connectionStatusChanged()));
-//  connect(_Connector, SIGNAL(disconnected()), this, SLOT(connectionStatusChanged()));
 //  connect(_Software, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
 //  connect(_Software, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
 //  connect(_SystemObject, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
@@ -152,7 +131,7 @@ void NMainWindow::createDocks()
 {
   _logDock = new QDockWidget(tr("Logs"), this);
   _logDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
-//  _logDock->setWidget(_Log);
+  _logDock->setWidget(_Log);
   _logDock->setFeatures(QDockWidget::DockWidgetMovable);
   addDockWidget(Qt::BottomDockWidgetArea, _logDock);
   _logDock->hide();
@@ -167,10 +146,10 @@ void NMainWindow::createMdiArea()
 void NMainWindow::createMenus()
 {
   _file = menuBar()->addMenu(tr("&File"));
-  _file->addAction(_connect);
   _file->addAction(_log);
   _file->addSeparator();
   _file->addAction(_exit);
+
 
   _management = menuBar()->addMenu(tr("&Management"));
   _management->addAction(_systemObject);
@@ -190,28 +169,22 @@ void NMainWindow::createObjects()
   _About = new NAbout(APP_VERSION, APP_VERSION_NAME);
  // _Client = new NClient();
  // _Connector = new NConnector(); // Parent is attached when action is executed
- // _Log = new NLog(this);
+  _Log = new NLog(this);
 //  _Software = new NSoftware();
 //  _SystemObject = new NSystemObject();
 }
 
 void NMainWindow::createStatusbar()
 {
-  _connectionStatus = new QLabel (this);
-  _connectionStatus->setPixmap(QPixmap(":/Resources/Images/NetworkConnectionOff").scaled(18,18));
-  _connectionStatus->setAlignment(Qt::AlignRight);
-
-  statusBar()->addPermanentWidget(_connectionStatus);
   statusBar()->setSizeGripEnabled(true);
 }
 
 void NMainWindow::createToolbars()
 {
   _filetb = addToolBar(tr("&File"));
-  _filetb->addAction(_connect);
-  _filetb->addAction(_log);
-  _filetb->addSeparator();
   _filetb->addAction(_exit);
+  _filetb->addSeparator();
+  _filetb->addAction(_log);
 
   _managementtb = addToolBar(tr("&Management"));
   _managementtb->addAction(_systemObject);
@@ -293,30 +266,6 @@ void NMainWindow::showClient()
   _Client->loadTable();*/
 }
 
-void NMainWindow::showConnect()
-{
- /* if(_loadedSubWindows.contains(_connect))
-  {
-    _loadedSubWindows.value(_connect)->show();
-    _Connector->show();
-  }
-  else
-  {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Connector, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
-    subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-    subWindow->setWindowTitle(_connect->text().remove("&"));
-    subWindow->setWindowIcon(_connect->icon());
-
-    moveToCenter(subWindow);
-    subWindow->show();
-    _Connector->show();
-
-    subWindow->setMinimumSize(subWindow->size());
-    subWindow->setMaximumSize(subWindow->size());
-    _loadedSubWindows[_connect] = subWindow;
-  }*/
-}
-
 void NMainWindow::showLog(bool show)
 {
   _logDock->setVisible(show);
@@ -325,7 +274,6 @@ void NMainWindow::showLog(bool show)
 void NMainWindow::showMax()
 {
   showMaximized();
-  showConnect();
 }
 
 void NMainWindow::showSoftware()
@@ -374,12 +322,12 @@ void NMainWindow::processEvent(int code)
 {
   NMessage message = _MessagePool.message(code);
   statusBar()->showMessage(message.text());
- // _Log->appendEntry(code, message);
+  _Log->appendEntry(code, message);
 }
 
 void NMainWindow::processEvent(const QString& message, int type)
 {
   NMessage mes(type, message);
   statusBar()->showMessage(message);
- // _Log->appendEntry(9000000, mes);
+  _Log->appendEntry(9000000, mes);
 }

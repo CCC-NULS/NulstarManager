@@ -13,6 +13,7 @@ SOURCES += Main.cpp \
 HEADERS += NMainWindow.h
 RESOURCES += Panel.qrc
 INCLUDEPATH += $$TOP_BUILDDIR/Tools \
+               $$TOP_BUILDDIR/Log \
                ../Definitions \
                ../About \
                ../Client \
@@ -22,13 +23,7 @@ INCLUDEPATH += $$TOP_BUILDDIR/Tools \
                ../Tools \
                ../Software \
                ../SystemObject #\
-            #   ../../../Libraries/Quazip/include \
-            #   ../../../Build/NulstarManager/Tools \
-            #   ../../../Build/NulstarManager/Client \
-            #   ../../../Build/NulstarManager/Connector \
-            #   ../../../Build/NulstarManager/Log \
-            #   ../../../Build/NulstarManager/Software \
-            #   ../../../Build/NulstarManager/SystemObject
+
 LIBS += -L$$DESTDIR \
 #-L../../../Build/NulstarManager \
       #-L../../../Data/Development/Libraries/Quazip/lib \
@@ -37,7 +32,7 @@ LIBS += -L$$DESTDIR \
       -lAbout \
       #-lClient \
       #-lConnector \
-      #-lLog \
+      -lLog \
       #-lSoftware \
       -lTools #\
      # -lSystemObject

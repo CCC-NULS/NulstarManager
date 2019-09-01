@@ -1,23 +1,31 @@
-#include <WCConstants.h>
+#include <NConstants.h>
 #include <QDate>
+#include <QFile>
 #include <QFont>
 #include <QStandardItem>
 #include <QStandardItemModel>
 #include <QStringList>
+#include <QTextStream>
 #include <QTime>
 
-#include "WCLog.h"
+#include "NLog.h"
 
-WCLog::WCLog(QWidget* parent)
-     : QWidget(parent)
-{
+NLog::NLog(QWidget* parent)
+    : QWidget(parent) {
   setupUi(this);
   createModel();
-  tvwLog->setColumnWidth(0,90);
+  tvwLog->setColumnWidth(0,110);
+  tvwLog->setColumnWidth(1,110);
+  tvwLog->setColumnWidth(2,110);
+
+  _logFile.setFileName("NulstarManager.log");
+  if(!_logFile.open(QFile::WriteOnly | QFile::Append)) {
+    NMessage message(NMessage::ErrorMessage, tr("Log file NulstarManager.log could not be opened, logs won't be saved."));
+    appendEntry(9000000, message);
+  }
 }
 
-void WCLog::appendEntry(int code, const WCMessage& message)
-{
+void NLog::appendEntry(int code, const NMessage& message) {
   QFont curFont = font();
   curFont.setItalic(true);
   int type = message.type();
@@ -26,31 +34,46 @@ void WCLog::appendEntry(int code, const WCMessage& message)
   QStandardItem* date = new QStandardItem(QDate::currentDate().toString(Qt::ISODate));
   QStandardItem* time = new QStandardItem(QTime::currentTime().toString("hh:mm:ss"));
   QStandardItem* mesItem = new QStandardItem(message.text());
-  codItem->setData(WCConstants::orange(), Qt::ForegroundRole);
-  if(type == WCMessage::BugMessage)
+  QString lMessageType;
+  codItem->setData(NConstants::orange(), Qt::ForegroundRole);
+  if(type == NMessage::BugMessage) {
     codItem->setData(QIcon(":/Resources/Images/Bug.png"), Qt::DecorationRole);
-  if(type == WCMessage::SuccessMessage)
+    lMessageType = tr("Bug");
+  }
+  if(type == NMessage::SuccessMessage) {
     codItem->setData(QIcon(":/Resources/Images/Tick.png"), Qt::DecorationRole);
-  if(type == WCMessage::ErrorMessage)
+    lMessageType = tr("Success");
+  }
+  if(type == NMessage::ErrorMessage) {
     codItem->setData(QIcon(":/Resources/Images/Error.png"), Qt::DecorationRole);
-  if(type == WCMessage::WarningMessage)
+    lMessageType = tr("Error");
+  }
+  if(type == NMessage::WarningMessage) {
     codItem->setData(QIcon(":/Resources/Images/Warning.png"), Qt::DecorationRole);
-  if(type == WCMessage::InfoMessage)
+    lMessageType = tr("Warning");
+  }
+  if(type == NMessage::InfoMessage) {
     codItem->setData(QIcon(":/Resources/Images/Info.png"), Qt::DecorationRole);
-  date->setData(WCConstants::green(), Qt::ForegroundRole);
+    lMessageType = tr("Info");
+  }
+  date->setData(NConstants::green(), Qt::ForegroundRole);
   date->setData(Qt::AlignCenter, Qt::TextAlignmentRole);
-  time->setData(WCConstants::green(), Qt::ForegroundRole);
+  time->setData(NConstants::green(), Qt::ForegroundRole);
   time->setData(Qt::AlignCenter, Qt::TextAlignmentRole);
-  mesItem->setData(WCConstants::darkBlue(), Qt::ForegroundRole);
+  mesItem->setData(NConstants::darkBlue(), Qt::ForegroundRole);
   mesItem->setData(curFont, Qt::FontRole);
   QList<QStandardItem*> items;
   items << codItem << date << time << mesItem;
   _logModel->appendRow(items);
   tvwLog->scrollToBottom();
+
+  if(_logFile.isOpen()) {
+    QTextStream lOutStream(&_logFile);
+    lOutStream << date->data(Qt::EditRole).toString() << qSetFieldWidth(12) << left << "   " << lMessageType << qSetFieldWidth(12)  << QString::number(code) << qSetFieldWidth(12)  << message.text() << endl;
+  }
 }
 
-void WCLog::createModel()
-{
+void NLog::createModel() {
   QStringList headers;
   headers << tr("Code") << tr("Date") << tr("Hour") << tr("Message");
 

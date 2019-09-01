@@ -4,12 +4,7 @@ SUBDIRS += QuaZIP \
            Definitions \
            Tools \
            About \
-           #Qftp \
-           #Connector \
-           #Log \
-           #SystemObject \
-           #Software \
-           #Client \
+           Log \
            Panel
 OTHER_FILES += common.pri \
                .qmake.conf

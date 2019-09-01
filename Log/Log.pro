@@ -1,16 +1,24 @@
+include($$TOP_SRCDIR/common.pri)
+
 QT += gui widgets
-CONFIG += static
+CONFIG += c++11 skip_target_version_ext
 DEFINES += LOG_LIBRARY
 TARGET = Log
 TEMPLATE = lib
-SOURCES += WCLog.cpp
-HEADERS += WCLog.h \
+SOURCES += NLog.cpp
+HEADERS += NLog.h \
     Log.h
-DESTDIR = ../../../Build/WorldcoinManager
+DESTDIR = $$LIBRARIES_OUTDIR
 FORMS += Log.ui
-INCLUDEPATH += ../Definitions
-LIBS += -L../../../Build/WorldcoinManager \
-        -lDefinitions
+INCLUDEPATH += $$TOP_BUILDDIR/$$TARGET \
+               ../Definitions \
+               ../Tools
+message($$INCLUDEPATH)
+LIBS += -L$$DESTDIR \
+        -lDefinitions \
+        -lTools
+
 
 RESOURCES += \
     Log.qrc
+

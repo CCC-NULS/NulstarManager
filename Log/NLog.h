@@ -1,7 +1,8 @@
-#ifndef WCLOG_H
-#define WCLOG_H
+#ifndef NLOG_H
+#define NLOG_H
 
-#include <WCMessage.h>
+#include <NMessage.h>
+#include <QFile>
 #include <QWidget>
 
 #include "Log.h"
@@ -9,19 +10,20 @@
 
 class QStandardItemModel;
 
-class WCLog : public QWidget, private Ui::uiLog
+class NLog : public QWidget, private Ui::uiLog
 {
   Q_OBJECT
 
   public:
-    explicit WCLog(QWidget* parent = 0);
+    explicit NLog(QWidget* parent = nullptr);
     void createModel();
 
   private:
     QStandardItemModel* _logModel;
+    QFile _logFile;
 
   public slots:
-    void appendEntry(int code, const WCMessage& message);
+    void appendEntry(int code, const NMessage& message);
 };
 
-#endif // WCCONNECTOR_H
+#endif // NLOG_H
