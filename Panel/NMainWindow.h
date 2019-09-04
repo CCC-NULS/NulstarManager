@@ -11,7 +11,7 @@ class NClient;
 class NConnector;
 class NLog;
 class NSoftware;
-class NSystemObject;
+class NPlatform;
 class QAction;
 class QCloseEvent;
 class QDockWidget;
@@ -33,20 +33,20 @@ class NMainWindow : public QMainWindow
     void closeEvent(QCloseEvent* event);
 
   private:
-    NAbout* _About;
+    NAbout* pAbout;
 //**    WCClient* _Client;
 //**    WCConnector* _Connector;
-    NMessagePool _MessagePool;
-    NLog* _Log;
+    NMessagePool mMessagePool;
+    NLog* pLog;
 //**    WCSoftware* _Software;
-//**    WCSystemObject* _SystemObject;
+    NPlatform* pPlatform;
     QAction* _about;
     QAction* _cascade;
     QAction* _client;
     QAction* _exit;
     QAction* _log;
     QAction* _software;
-    QAction* _systemObject;
+    QAction* _platform;
     QAction* _tile;
     QDockWidget* _logDock;
     QMap<QAction*, QMdiSubWindow*> _loadedSubWindows;
@@ -78,9 +78,8 @@ class NMainWindow : public QMainWindow
     void showLog(bool show);
     void showMax();
     void showSoftware();
-    void showSystemObject();
-    void processEvent(int code);
-    void processEvent(const QString& message, int type);
+    void showPlatform();
+    void fProcessEvent(int code, const QString& message, int type);
 };
 
 #endif // NMAINWINDOW_H

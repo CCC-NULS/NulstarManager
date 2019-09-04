@@ -14,6 +14,7 @@ HEADERS += NMainWindow.h
 RESOURCES += Panel.qrc
 INCLUDEPATH += $$TOP_BUILDDIR/Tools \
                $$TOP_BUILDDIR/Log \
+               $$TOP_BUILDDIR/Platform \
                ../Definitions \
                ../About \
                ../Client \
@@ -22,11 +23,9 @@ INCLUDEPATH += $$TOP_BUILDDIR/Tools \
                ../QuaZIP \
                ../Tools \
                ../Software \
-               ../SystemObject #\
+               ../Platform
 
 LIBS += -L$$DESTDIR \
-#-L../../../Build/NulstarManager \
-      #-L../../../Data/Development/Libraries/Quazip/lib \
       -lQuaZIP \
       -lDefinitions \
       -lAbout \
@@ -34,8 +33,8 @@ LIBS += -L$$DESTDIR \
       #-lConnector \
       -lLog \
       #-lSoftware \
-      -lTools #\
-     # -lSystemObject
+      -lTools \
+      -lPlatform
 
 
 

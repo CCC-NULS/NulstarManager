@@ -53,7 +53,14 @@ extern "C" {
 //#define HAVE_BZIP2
 
 #ifndef _ZLIB_H
+#include <QtGlobal>
+
+#if defined(Q_OS_WIN)
 #include <QtZlib/zlib.h>
+#endif
+#if defined(Q_OS_LINUX)
+#include <zlib.h>
+#endif
 #endif
 
 #ifndef _ZLIBIOAPI_H

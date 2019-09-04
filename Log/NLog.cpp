@@ -21,11 +21,11 @@ NLog::NLog(QWidget* parent)
   _logFile.setFileName("NulstarManager.log");
   if(!_logFile.open(QFile::WriteOnly | QFile::Append)) {
     NMessage message(NMessage::ErrorMessage, tr("Log file NulstarManager.log could not be opened, logs won't be saved."));
-    appendEntry(9000000, message);
+    fAppendEntry(1000001, message);
   }
 }
 
-void NLog::appendEntry(int code, const NMessage& message) {
+void NLog::fAppendEntry(int code, const NMessage& message) {
   QFont curFont = font();
   curFont.setItalic(true);
   int type = message.type();

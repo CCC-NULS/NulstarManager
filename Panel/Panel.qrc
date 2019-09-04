@@ -6,9 +6,9 @@
         <file>Images/NetworkConnection.png</file>
         <file>Images/NetworkConnectionOff.png</file>
         <file>Images/Software.png</file>
-        <file>Images/SystemObjects.png</file>
         <file>Images/WindowsCascade.png</file>
         <file>Images/WindowsTile.png</file>
         <file>Images/NulstarManagerLogo.png</file>
+        <file>Images/Platform.png</file>
     </qresource>
 </RCC>

@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/Resources">
+        <file>Images/Accept.png</file>
+        <file>Images/Add.png</file>
+        <file>Images/Cancel.png</file>
+        <file>Images/Edit.png</file>
+        <file>Images/Minus.png</file>
+        <file>Images/Refresh.png</file>
+    </qresource>
+</RCC>

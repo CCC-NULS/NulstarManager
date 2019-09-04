@@ -3,7 +3,7 @@
 //#include <NConnector.h>
 #include <NLog.h>
 //#include <NSoftware.h>
-//#include <NSystemObject.h>
+#include <NPlatform.h>
 #include <QAction>
 #include <QApplication>
 #include <QCloseEvent>
@@ -84,11 +84,11 @@ void NMainWindow::createActions()
   _exit->setStatusTip(tr("Exit program"));
   _exit->setObjectName("Exit");
 
-  _systemObject = new QAction(tr("&Objects"), this);
-  _systemObject->setIcon(QIcon(":/Resources/Images/SystemObjects.png"));
-  _systemObject->setShortcut(QKeySequence(Qt::Key_F6));
-  _systemObject->setStatusTip(tr("System objects management"));
-  _systemObject->setObjectName("SystemObject");
+  _platform = new QAction(tr("&Platforms"), this);
+  _platform->setIcon(QIcon(":/Resources/Images/Platform.png"));
+  _platform->setShortcut(QKeySequence(Qt::Key_F6));
+  _platform->setStatusTip(tr("System objects management"));
+  _platform->setObjectName("SystemObject");
 
   _software = new QAction(tr("&Software"), this);
   _software->setIcon(QIcon(":/Resources/Images/Software.png"));
@@ -119,19 +119,17 @@ void NMainWindow::createConnections()
   connect(_tile, SIGNAL(triggered()), _centralWidget, SLOT(tileSubWindows()));
   connect(_log, SIGNAL(triggered(bool)), this, SLOT(showLog(bool)));
   connect(_software, SIGNAL(triggered()), this, SLOT(showSoftware()));
-  connect(_systemObject, SIGNAL(triggered()), this, SLOT(showSystemObject()));
-//  connect(_Client, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
-//  connect(_Client, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
-//  connect(_Software, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
-//  connect(_Software, SIGNAL(eventGenerated(QString, int)), this, SLOT(processEvent(QString,int)));
-//  connect(_SystemObject, SIGNAL(eventGenerated(int)), this, SLOT(processEvent(int)));
+  connect(_platform, SIGNAL(triggered()), this, SLOT(showPlatform()));
+//  connect(_Client, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
+//  connect(_Software, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
+  connect(pPlatform, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
 }
 
 void NMainWindow::createDocks()
 {
   _logDock = new QDockWidget(tr("Logs"), this);
   _logDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
-  _logDock->setWidget(_Log);
+  _logDock->setWidget(pLog);
   _logDock->setFeatures(QDockWidget::DockWidgetMovable);
   addDockWidget(Qt::BottomDockWidgetArea, _logDock);
   _logDock->hide();
@@ -152,7 +150,7 @@ void NMainWindow::createMenus()
 
 
   _management = menuBar()->addMenu(tr("&Management"));
-  _management->addAction(_systemObject);
+  _management->addAction(_platform);
   _management->addAction(_software);
   _management->addAction(_client);
 
@@ -166,12 +164,12 @@ void NMainWindow::createMenus()
 
 void NMainWindow::createObjects()
 {
-  _About = new NAbout(APP_VERSION, APP_VERSION_NAME);
+  pAbout = new NAbout(APP_VERSION, APP_VERSION_NAME);
  // _Client = new NClient();
  // _Connector = new NConnector(); // Parent is attached when action is executed
-  _Log = new NLog(this);
+  pLog = new NLog(this);
 //  _Software = new NSoftware();
-//  _SystemObject = new NSystemObject();
+  pPlatform = new NPlatform();
 }
 
 void NMainWindow::createStatusbar()
@@ -187,7 +185,7 @@ void NMainWindow::createToolbars()
   _filetb->addAction(_log);
 
   _managementtb = addToolBar(tr("&Management"));
-  _managementtb->addAction(_systemObject);
+  _managementtb->addAction(_platform);
   _managementtb->addAction(_software);
   _managementtb->addAction(_client);
 
@@ -226,8 +224,8 @@ void NMainWindow::moveToCenter(QMdiSubWindow* subWindow)
 
 void NMainWindow::showAbout()
 {
-  _About->setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
-  _About->showSplash();
+  pAbout->setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
+  pAbout->showSplash();
 
   int screenWidth, width1;
   int screenHeight, height1;
@@ -236,13 +234,13 @@ void NMainWindow::showAbout()
   QSize windowSize;
   screenWidth = QApplication::desktop()->width();
   screenHeight = QApplication::desktop()->height();
-  windowSize = _About->size();
+  windowSize = pAbout->size();
   width1 = windowSize.width();
   height1 = windowSize.height();
   x = (screenWidth - width1) / 2;
   y = (screenHeight - height1) / 2;
 
-  _About->move(x,y);
+  pAbout->move(x,y);
 }
 
 void NMainWindow::showClient()
@@ -297,37 +295,30 @@ void NMainWindow::showSoftware()
   _Software->loadTable();*/
 }
 
-void NMainWindow::showSystemObject()
+void NMainWindow::showPlatform()
 {
-/*  if(_loadedSubWindows.contains(_systemObject))
+  if(_loadedSubWindows.contains(_platform))
   {
-    _loadedSubWindows.value(_systemObject)->show();
-    _SystemObject->show();
+    _loadedSubWindows.value(_platform)->show();
+    pPlatform->show();
   }
   else
   {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_SystemObject, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
+    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(pPlatform, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
     subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-    subWindow->setWindowTitle(_systemObject->text().remove("&"));
-    subWindow->setWindowIcon(_systemObject->icon());
+    subWindow->setWindowTitle(_platform->text().remove("&"));
+    subWindow->setWindowIcon(_platform->icon());
     subWindow->show();
-    subWindow->resize(580,250);
-    _SystemObject->show();
-    _loadedSubWindows[_systemObject] = subWindow;
+    subWindow->resize(680,250);
+    pPlatform->show();
+    _loadedSubWindows[_platform] = subWindow;
   }
-  _SystemObject->loadTable();*/
+  pPlatform->fLoadModel();
 }
 
-void NMainWindow::processEvent(int code)
-{
-  NMessage message = _MessagePool.message(code);
-  statusBar()->showMessage(message.text());
-  _Log->appendEntry(code, message);
-}
-
-void NMainWindow::processEvent(const QString& message, int type)
+void NMainWindow::fProcessEvent(int code, const QString& message, int type)
 {
   NMessage mes(type, message);
   statusBar()->showMessage(message);
-  _Log->appendEntry(9000000, mes);
+  pLog->fAppendEntry(code, mes);
 }

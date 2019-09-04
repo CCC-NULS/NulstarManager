@@ -11,7 +11,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <QtGlobal>
+
+#if defined(Q_OS_WIN)
 #include <QtZlib/zlib.h>
+#endif
+#if defined(Q_OS_LINUX)
+#include <zlib.h>
+#endif
 
 #include "ioapi.h"
 #include "quazip_global.h"

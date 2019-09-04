@@ -23,7 +23,7 @@ class LOGSHARED_EXPORT NLog : public QWidget, private Ui::uiLog
     QFile _logFile;
 
   public slots:
-    void appendEntry(int code, const NMessage& message);
+    void fAppendEntry(int code, const NMessage& message);
 };
 
 #endif // NLOG_H
