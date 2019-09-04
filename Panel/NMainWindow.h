@@ -35,10 +35,9 @@ class NMainWindow : public QMainWindow
   private:
     NAbout* pAbout;
 //**    WCClient* _Client;
-//**    WCConnector* _Connector;
     NMessagePool mMessagePool;
     NLog* pLog;
-//**    WCSoftware* _Software;
+    NSoftware* pSoftware;
     NPlatform* pPlatform;
     QAction* _about;
     QAction* _cascade;

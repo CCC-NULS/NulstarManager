@@ -2,7 +2,7 @@
 //#include <NClient.h>
 //#include <NConnector.h>
 #include <NLog.h>
-//#include <NSoftware.h>
+#include <NSoftware.h>
 #include <NPlatform.h>
 #include <QAction>
 #include <QApplication>
@@ -121,7 +121,7 @@ void NMainWindow::createConnections()
   connect(_software, SIGNAL(triggered()), this, SLOT(showSoftware()));
   connect(_platform, SIGNAL(triggered()), this, SLOT(showPlatform()));
 //  connect(_Client, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
-//  connect(_Software, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
+  connect(pSoftware, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
   connect(pPlatform, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
 }
 
@@ -168,7 +168,7 @@ void NMainWindow::createObjects()
  // _Client = new NClient();
  // _Connector = new NConnector(); // Parent is attached when action is executed
   pLog = new NLog(this);
-//  _Software = new NSoftware();
+  pSoftware = new NSoftware();
   pPlatform = new NPlatform();
 }
 
@@ -199,7 +199,7 @@ void NMainWindow::createToolbars()
 
 void NMainWindow::initObjects()
 {
-  //_Connector->loadSettings();
+
 }
 
 void NMainWindow::moveToCenter(QMdiSubWindow* subWindow)
@@ -276,23 +276,21 @@ void NMainWindow::showMax()
 
 void NMainWindow::showSoftware()
 {
- /* if(_loadedSubWindows.contains(_software))
-  {
+  if(_loadedSubWindows.contains(_software)) {
     _loadedSubWindows.value(_software)->show();
-    _Software->show();
+    pSoftware->show();
   }
-  else
-  {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Software, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
+  else {
+    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(pSoftware, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
     subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
     subWindow->setWindowTitle(_software->text().remove("&"));
     subWindow->setWindowIcon(_software->icon());
     subWindow->show();
-    subWindow->resize(580,250);
-    _Software->show();
+    subWindow->resize(680,250);
+    pSoftware->show();
     _loadedSubWindows[_software] = subWindow;
   }
-  _Software->loadTable();*/
+  pSoftware->fLoadModel();
 }
 
 void NMainWindow::showPlatform()

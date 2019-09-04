@@ -1,19 +1,19 @@
-#ifndef NPLATFORMRECORD_H
-#define NPLATFORMRECORD_H
+#ifndef NSOFTWARERECORD_H
+#define NSOFTWARERECORD_H
 
 #include <QDialog>
 #include <QLineEdit>
 #include <QStringList>
 
-#include "Platform.h"
-#include "ui_NPlatformRecord.h"
+#include "Software.h"
+#include "ui_NSoftwareRecord.h"
 
-class NPlatformRecord : public QDialog, private Ui::uiPlatformRecord
+class NSoftwareRecord : public QDialog, private Ui::uiSoftwareRecord
 {
   Q_OBJECT
 
   public:
-    explicit NPlatformRecord(QWidget* parent = nullptr);
+    explicit NSoftwareRecord(QWidget* parent = nullptr);
     bool status(const QLineEdit* lineEdit) const { return lineEdit->property("Status").toBool(); }
     void configUi();
     void createConnections();
@@ -37,4 +37,4 @@ class NPlatformRecord : public QDialog, private Ui::uiPlatformRecord
     void sObjectInserted(const QStringList& values);
 };
 
-#endif //NPLATFORMRECORD_H
+#endif //NSOFTWARERECORD_H

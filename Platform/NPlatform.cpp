@@ -45,7 +45,6 @@ void NPlatform::fCreateModel() {
   connect(tbtAdd, SIGNAL(clicked()), this, SLOT(fAddRecord()));
   connect(tbtEdit, SIGNAL(clicked()), this, SLOT(fEditRecord()));
   connect(tbtDelete, SIGNAL(clicked()), this, SLOT(fDeleteRecord()));
-  connect(pRecord, SIGNAL(sEventGenerated(int,QString,int)), this, SIGNAL(sEventGenerated(int,QString,int)));
   connect(pRecord, SIGNAL(sObjectEdited(QStringList)), this, SLOT(fSaveEditRecord(QStringList)));
   connect(pRecord, SIGNAL(sObjectInserted(QStringList)), this, SLOT(fSaveAddRecord(QStringList)));
   connect(tvwPlatform, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(fEditRecord()));

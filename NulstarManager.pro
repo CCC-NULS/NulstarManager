@@ -6,6 +6,7 @@ SUBDIRS += QuaZIP \
            About \
            Log \
            Platform \
+           Software \
            Panel
 OTHER_FILES += common.pri \
                .qmake.conf

@@ -15,6 +15,7 @@ RESOURCES += Panel.qrc
 INCLUDEPATH += $$TOP_BUILDDIR/Tools \
                $$TOP_BUILDDIR/Log \
                $$TOP_BUILDDIR/Platform \
+               $$TOP_BUILDDIR/Software \
                ../Definitions \
                ../About \
                ../Client \
@@ -30,9 +31,8 @@ LIBS += -L$$DESTDIR \
       -lDefinitions \
       -lAbout \
       #-lClient \
-      #-lConnector \
       -lLog \
-      #-lSoftware \
+      -lSoftware \
       -lTools \
       -lPlatform
 
