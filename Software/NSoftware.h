@@ -40,6 +40,7 @@ class SOFTWARESHARED_EXPORT NSoftware : public QWidget, private Ui::uiNSoftware
 
   signals:
     void sEventGenerated(int lCode,QString lMessage,int lType);
+    void sDataChanged();
 };
 
 #endif // NSOFTWARE_H

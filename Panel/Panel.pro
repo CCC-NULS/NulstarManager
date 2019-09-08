@@ -16,10 +16,12 @@ INCLUDEPATH += $$TOP_BUILDDIR/Tools \
                $$TOP_BUILDDIR/Log \
                $$TOP_BUILDDIR/Platform \
                $$TOP_BUILDDIR/Software \
+               $$TOP_BUILDDIR/CreatePackage \
                ../Definitions \
                ../About \
                ../Client \
                ../Connector \
+               ../CreatePackage \
                ../Log \
                ../QuaZIP \
                ../Tools \
@@ -30,7 +32,7 @@ LIBS += -L$$DESTDIR \
       -lQuaZIP \
       -lDefinitions \
       -lAbout \
-      #-lClient \
+      -lCreatePackage \
       -lLog \
       -lSoftware \
       -lTools \

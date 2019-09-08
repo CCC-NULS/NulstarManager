@@ -83,6 +83,7 @@ bool NSoftware::fSaveModel() {
   }
   else
     return false;
+  emit sDataChanged();
   return true;
 }
 

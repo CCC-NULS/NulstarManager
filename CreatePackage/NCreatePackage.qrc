@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/Resources">
+        <file>Images/Accept.png</file>
+        <file>Images/Add.png</file>
+        <file>Images/Cancel.png</file>
+        <file>Images/Edit.png</file>
+        <file>Images/Minus.png</file>
+        <file>Images/Refresh.png</file>
+        <file>Images/ArrowDown.png</file>
+        <file>Images/UploadFiles.png</file>
+        <file>Images/CreatePackage.png</file>
+        <file>Images/CircleGreen.png</file>
+        <file>Images/CircleYellow.png</file>
+        <file>Images/CircleOrange.png</file>
+        <file>Images/CircleRed.png</file>
+    </qresource>
+</RCC>

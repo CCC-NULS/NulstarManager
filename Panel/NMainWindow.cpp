@@ -1,6 +1,5 @@
 #include <NAbout.h>
-//#include <NClient.h>
-//#include <NConnector.h>
+#include <NCreatePackage.h>
 #include <NLog.h>
 #include <NSoftware.h>
 #include <NPlatform.h>
@@ -96,11 +95,11 @@ void NMainWindow::createActions()
   _software->setStatusTip(tr("Software management"));
   _software->setObjectName("Software");
 
-  _client = new QAction(tr("&Client"), this);
-  _client->setIcon(QIcon(":/Resources/Images/Client.png"));
-  _client->setShortcut(QKeySequence(Qt::Key_F8));
-  _client->setStatusTip(tr("Client Management"));
-  _client->setObjectName("Client");
+  _createpackage = new QAction(tr("&CreatePackage"), this);
+  _createpackage->setIcon(QIcon(":/Resources/Images/CreatePackage.png"));
+  _createpackage->setShortcut(QKeySequence(Qt::Key_F8));
+  _createpackage->setStatusTip(tr("Create package!"));
+  _createpackage->setObjectName("CreatePackage");
 
   _log = new QAction(tr("&Log"), this);
   _log->setIcon(QIcon(":/Resources/Images/Log.png"));
@@ -115,14 +114,16 @@ void NMainWindow::createConnections()
   connect(_exit, SIGNAL(triggered()), qApp, SLOT(quit()));
   connect(_about, SIGNAL(triggered()), this, SLOT(showAbout()));
   connect(_cascade, SIGNAL(triggered()), _centralWidget, SLOT(cascadeSubWindows()));
-  connect(_client, SIGNAL(triggered()), this, SLOT(showClient()));
+  connect(_createpackage, SIGNAL(triggered()), this, SLOT(showCreatePackage()));
   connect(_tile, SIGNAL(triggered()), _centralWidget, SLOT(tileSubWindows()));
   connect(_log, SIGNAL(triggered(bool)), this, SLOT(showLog(bool)));
   connect(_software, SIGNAL(triggered()), this, SLOT(showSoftware()));
-  connect(_platform, SIGNAL(triggered()), this, SLOT(showPlatform()));
-//  connect(_Client, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
+  connect(_platform, SIGNAL(triggered()), this, SLOT(showPlatform()));  
   connect(pSoftware, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
   connect(pPlatform, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
+  connect(pSoftware, SIGNAL(sDataChanged()), pCreatePackage, SLOT(fLoadTables()));
+  connect(pPlatform, SIGNAL(sDataChanged()), pCreatePackage, SLOT(fLoadTables()));
+  connect(pCreatePackage, SIGNAL(sEventGenerated(int,QString,int)), this, SLOT(fProcessEvent(int,QString,int)));
 }
 
 void NMainWindow::createDocks()
@@ -152,7 +153,7 @@ void NMainWindow::createMenus()
   _management = menuBar()->addMenu(tr("&Management"));
   _management->addAction(_platform);
   _management->addAction(_software);
-  _management->addAction(_client);
+  _management->addAction(_createpackage);
 
   _window = menuBar()->addMenu(tr("&Window"));
   _window->addAction(_cascade);
@@ -165,8 +166,7 @@ void NMainWindow::createMenus()
 void NMainWindow::createObjects()
 {
   pAbout = new NAbout(APP_VERSION, APP_VERSION_NAME);
- // _Client = new NClient();
- // _Connector = new NConnector(); // Parent is attached when action is executed
+  pCreatePackage = new NCreatePackage();
   pLog = new NLog(this);
   pSoftware = new NSoftware();
   pPlatform = new NPlatform();
@@ -187,7 +187,7 @@ void NMainWindow::createToolbars()
   _managementtb = addToolBar(tr("&Management"));
   _managementtb->addAction(_platform);
   _managementtb->addAction(_software);
-  _managementtb->addAction(_client);
+  _managementtb->addAction(_createpackage);
 
   _windowtb = addToolBar(tr("&Window"));
   _windowtb ->addAction(_cascade);
@@ -243,25 +243,23 @@ void NMainWindow::showAbout()
   pAbout->move(x,y);
 }
 
-void NMainWindow::showClient()
+void NMainWindow::showCreatePackage()
 {
-/*  if(_loadedSubWindows.contains(_client))
-  {
-    _loadedSubWindows.value(_client)->show();
-    _Client->show();
+  if(_loadedSubWindows.contains(_createpackage)) {
+    _loadedSubWindows.value(_createpackage)->show();
+    pCreatePackage->show();
   }
-  else
-  {
-    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(_Client, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindonloseButtonHint);
+  else {
+    QMdiSubWindow* subWindow = _centralWidget->addSubWindow(pCreatePackage, Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
     subWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-    subWindow->setWindowTitle(_client->text().remove("&"));
-    subWindow->setWindowIcon(_client->icon());
+    subWindow->setWindowTitle(_createpackage->text().remove("&"));
+    subWindow->setWindowIcon(_createpackage->icon());
     subWindow->show();
-    subWindow->resize(580,250);
-    _Client->show();
-    _loadedSubWindows[_client] = subWindow;
+    subWindow->resize(900,450);
+    pCreatePackage->show();
+    _loadedSubWindows[_createpackage] = subWindow;
   }
-  _Client->loadTable();*/
+  pCreatePackage->fLoadTables();
 }
 
 void NMainWindow::showLog(bool show)

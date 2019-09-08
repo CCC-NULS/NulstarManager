@@ -83,6 +83,7 @@ bool NPlatform::fSaveModel() {
   }
   else
     return false;
+  emit sDataChanged();
   return true;
 }
 

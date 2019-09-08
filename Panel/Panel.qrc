@@ -10,5 +10,6 @@
         <file>Images/WindowsTile.png</file>
         <file>Images/NulstarManagerLogo.png</file>
         <file>Images/Platform.png</file>
+        <file>Images/CreatePackage.png</file>
     </qresource>
 </RCC>

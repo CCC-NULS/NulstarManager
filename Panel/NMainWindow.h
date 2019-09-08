@@ -7,7 +7,7 @@
 #include "NulstarManagerVersion.h"
 
 class NAbout;
-class NClient;
+class NCreatePackage;
 class NConnector;
 class NLog;
 class NSoftware;
@@ -34,14 +34,14 @@ class NMainWindow : public QMainWindow
 
   private:
     NAbout* pAbout;
-//**    WCClient* _Client;
+    NCreatePackage* pCreatePackage;
     NMessagePool mMessagePool;
     NLog* pLog;
     NSoftware* pSoftware;
     NPlatform* pPlatform;
     QAction* _about;
     QAction* _cascade;
-    QAction* _client;
+    QAction* _createpackage;
     QAction* _exit;
     QAction* _log;
     QAction* _software;
@@ -71,9 +71,8 @@ class NMainWindow : public QMainWindow
     void moveToCenter(QMdiSubWindow* subWindow);
 
   private slots:
-   // void connectionStatusChanged();
     void showAbout();
-    void showClient();
+    void showCreatePackage();
     void showLog(bool show);
     void showMax();
     void showSoftware();

@@ -40,6 +40,7 @@ class PLATFORMSHARED_EXPORT NPlatform : public QWidget, private Ui::uiNPlatform
 
   signals:
     void sEventGenerated(int lCode,QString lMessage,int lType);
+    void sDataChanged();
 };
 
 #endif // NPLATFORM_H
