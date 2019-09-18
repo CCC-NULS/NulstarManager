@@ -18,22 +18,32 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
   public:
     explicit NCreatePackage(QWidget* parent = nullptr);
     void fCreateModel();
+    void fCreateValidators();
+    bool fCheckUIStatus() const;
+    bool fStatus(const QLineEdit* rLineEdit) const { return rLineEdit->property("Status").toBool(); }
 
   protected:
     void fLoadPlatform();
 
   private:
+    const quint64 cMinNameSize = 3;
+    const quint64 cMaxNameSize = 50;
+
     QStandardItemModel* pFileModel;
     QStandardItemModel* pLogModel;
     QSortFilterProxyModel* pProxyModelFiles;
     QSortFilterProxyModel* pProxyModelLog;
     QFile mCreatePackageFile;
+    void fSetStatus(QLineEdit* rLineEdit, bool fStatus);
 
   public slots:
+    void fCreatePackage();
     void fAddLog();
     void fDeleteLog();
     void fLoadFiles();
+    void fVerifyLogModel();
     void fLoadTables();
+    void fValidateParameter(const QString& lParameter);
 
   signals:
     void sEventGenerated(int lCode,QString lMessage,int lType);
