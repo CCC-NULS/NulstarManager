@@ -88,15 +88,38 @@ void NCreatePackage::fCreateValidators() {
 }
 
 void NCreatePackage::fSetStatus(QLineEdit* rLineEdit, bool fStatus) {
-
+  QColor lColor;
+  if(fStatus){
+    lColor = NConstants::lightBlue();
+    rLineEdit->setProperty("Status", true);
+  }
+  else {
+    lColor = NConstants::lightRed();
+     rLineEdit->setProperty("Status", false);
+  }
+  rLineEdit->setStyleSheet(QString("background-color: rgb%1").arg(NConstants::colorToRgbText(lColor)));
+  pbtCreatePackage->setEnabled(fCheckUIStatus());
 }
 
 void NCreatePackage::fLoadFiles() {
 
 }
 
-void NCreatePackage::fVerifyLogModel() {
-
+void NCreatePackage::fVerifyLogModel(QStandardItem* rItem) {
+  disconnect(pLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(fVerifyLogModel(QStandardItem*)));
+  if(!rItem || ((rItem->column() < 0) && (rItem->column() > 2)))
+      return;
+  if(rItem->data(Qt::DisplayRole).toString().simplified().isEmpty()) {
+    rItem->setData("0", NConstants::StatusRole);
+    rItem->setData(QBrush(NConstants::lightRed()), Qt::BackgroundRole);
+  }
+  else {
+    rItem->setData("1", NConstants::StatusRole);
+    rItem->setData(QBrush(NConstants::white()), Qt::BackgroundRole);
+  }
+  rItem->setData(rItem->data(Qt::DisplayRole).toString(), Qt::UserRole);
+  fCheckUIStatus();
+  connect(pLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(fVerifyLogModel(QStandardItem*)));
 }
 
 bool NCreatePackage::fCheckUIStatus() const
@@ -154,26 +177,37 @@ void NCreatePackage::fLoadPlatform() {
 }
 
 void NCreatePackage::fAddLog() {
-   /* disconnect(_upgradeLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(verifyLogModel(QStandardItem*)));
+  disconnect(pLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(fVerifyLogModel(QStandardItem*)));
+  QStandardItem* rComponent = new QStandardItem();
+  //rComponent->setData("NULL", Qt::UserRole);
+  QStandardItem* rType = new QStandardItem();
+ // rType->setData(ledCode->text(), Qt::UserRole);
+  QStandardItem* rLog = new QStandardItem();
 
-     QStandardItem* key = new QStandardItem();
-     key->setData("NULL", Qt::UserRole);
-     QStandardItem* master = new QStandardItem();
-     master->setData(ledCode->text(), Qt::UserRole);
-     QStandardItem* log = new QStandardItem();
+  QList<QStandardItem* > lList;
+  lList << rComponent << rType << rLog;
+  pLogModel->appendRow(lList);
+  fVerifyLogModel(rLog);
 
-     QList<QStandardItem* > list;
-     list << key << master << log;
-     _upgradeLogModel->appendRow(list);
-     verifyLogModel(log);
-
-     connect(_upgradeLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(verifyLogModel(QStandardItem*)));*/
+  connect(pLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(fVerifyLogModel(QStandardItem*)));
 }
 
 void NCreatePackage::fDeleteLog() {
-
+  QModelIndexList lSelection = tvwUpgradeLog->selectionModel()->selectedIndexes();
+  if(!lSelection.count())
+    return;
+  pLogModel->removeRow(lSelection.at(0).row());
 }
 
 void NCreatePackage::fValidateParameter(const QString& lParameter) {
+  QString lCurrentValue = lParameter;
+  QLineEdit* lParam = qobject_cast<QLineEdit*> (sender());
+  Q_ASSERT(lParam);
 
+  int lPos = 0;
+  QValidator::State lState = lParam->validator()->validate(lCurrentValue, lPos);
+  if(lState == QValidator::Acceptable)
+    fSetStatus(lParam, true);
+  else
+    fSetStatus(lParam, false);
 }

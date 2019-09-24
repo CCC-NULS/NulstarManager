@@ -10,6 +10,7 @@
 
 class QSortFilterProxyModel;
 class QStandardItemModel;
+class QStandardItem;
 
 class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::uiCreatePackage
 {
@@ -41,7 +42,7 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     void fAddLog();
     void fDeleteLog();
     void fLoadFiles();
-    void fVerifyLogModel();
+    void fVerifyLogModel(QStandardItem* rItem);
     void fLoadTables();
     void fValidateParameter(const QString& lParameter);
 
