@@ -74,7 +74,7 @@ void NCreatePackage::fCreateModel() {
 
 void NCreatePackage::fCreateValidators() {
   NValidatorCreator::createValidator(ledName, NConstants::NameRegExp, cMinNameSize, cMaxNameSize);
-  NValidatorCreator::createValidator(ledVersion, NConstants::VersionRegExp, 8, 8);
+  NValidatorCreator::createValidator(ledVersion, NConstants::VersionRegExp, 5, 8);
 
   fSetStatus(ledName, false);
   fSetStatus(ledVersion, false);

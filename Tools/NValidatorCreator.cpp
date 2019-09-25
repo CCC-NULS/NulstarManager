@@ -9,6 +9,7 @@
 #include "VAIntValidator.h"
 #include "VAResourceValidator.h"
 #include "VAStringValidator.h"
+#include "VAVersionValidator.h"
 
 const int _minPort = 1;
 const int _maxPort = 32768;
@@ -67,8 +68,10 @@ QValidator* NValidatorCreator::createValidator(QLineEdit* parent, NConstants::Cu
   }
   if(customRegExp == NConstants::VersionRegExp)
   {
-    QString regExpr("[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}");
+  //  validator = new VAVersionValidator(parent);
+    QString regExpr("^(\\d+)\\.(\\d+)\\.(\\d+)");
     validator = new VAStringValidator(regExpr, min, max, parent);
+
     parent->setValidator(validator);
     return validator;
   }

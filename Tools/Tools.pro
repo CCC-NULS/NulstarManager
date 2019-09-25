@@ -13,7 +13,8 @@ SOURCES += NValidatorCreator.cpp \
     VAIntValidator.cpp \
     NSplashScreen.cpp \
     DLProgressBar.cpp \
-    DLCheckBox.cpp
+    DLCheckBox.cpp \
+    VAVersionValidator.cpp
 HEADERS += Tools.h \
     NValidatorCreator.h \
     VAResourceValidator.h \
@@ -22,7 +23,8 @@ HEADERS += Tools.h \
     VAIntValidator.h \
     NSplashScreen.h \
     DLProgressBar.h \
-    DLCheckBox.h
+    DLCheckBox.h \
+    VAVersionValidator.h
 
 FORMS += NSplashScreen.ui
 DESTDIR=$$LIBRARIES_OUTDIR
