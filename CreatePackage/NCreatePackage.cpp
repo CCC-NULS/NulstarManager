@@ -52,11 +52,10 @@ void NCreatePackage::fCreateModel() {
   tvwFiles->setColumnWidth(1,180);
   tvwFiles->setColumnWidth(1,110);
 
-  tvwFiles->setSortingEnabled(false);
-  tvwFiles->setModel(pProxyModelFiles);
-  tvwFiles->sortByColumn(1, Qt::AscendingOrder);
-  tvwFiles->setColumnWidth(0,180);
-  tvwFiles->setColumnWidth(1,110);
+  tvwLog->setSortingEnabled(false);
+  tvwLog->setModel(pProxyModelLog);
+  tvwLog->setColumnWidth(0,110);
+  tvwLog->setColumnWidth(1,110);
 
   lblUpgradeCommand->hide();
   tvwUpgradeCommand->hide();
@@ -107,7 +106,7 @@ void NCreatePackage::fLoadFiles() {
 
 void NCreatePackage::fVerifyLogModel(QStandardItem* rItem) {
   disconnect(pLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(fVerifyLogModel(QStandardItem*)));
-  if(!rItem || ((rItem->column() < 0) && (rItem->column() > 2)))
+  if(!rItem || ((rItem->column() < 0) || (rItem->column() > 2)))
       return;
   if(rItem->data(Qt::DisplayRole).toString().simplified().isEmpty()) {
     rItem->setData("0", NConstants::StatusRole);
@@ -115,10 +114,10 @@ void NCreatePackage::fVerifyLogModel(QStandardItem* rItem) {
   }
   else {
     rItem->setData("1", NConstants::StatusRole);
-    rItem->setData(QBrush(NConstants::white()), Qt::BackgroundRole);
+    rItem->setData(QBrush(NConstants::lightBlue()), Qt::BackgroundRole);
   }
   rItem->setData(rItem->data(Qt::DisplayRole).toString(), Qt::UserRole);
-  fCheckUIStatus();
+  pbtCreatePackage->setEnabled(fCheckUIStatus());
   connect(pLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(fVerifyLogModel(QStandardItem*)));
 }
 
@@ -129,8 +128,15 @@ bool NCreatePackage::fCheckUIStatus() const
   if(!fStatus(ledName))
     return false;
 
+  if(pLogModel->rowCount() == 0)
+    return false;
+
   for(int i = 0; i < pLogModel->rowCount(); i++)
   {
+    if(pLogModel->item(i,0)->data(NConstants::StatusRole).toString() == "0")
+      return false;
+    if(pLogModel->item(i,1)->data(NConstants::StatusRole).toString() == "0")
+      return false;
     if(pLogModel->item(i,2)->data(NConstants::StatusRole).toString() == "0")
       return false;
   }
@@ -187,16 +193,18 @@ void NCreatePackage::fAddLog() {
   QList<QStandardItem* > lList;
   lList << rComponent << rType << rLog;
   pLogModel->appendRow(lList);
+  fVerifyLogModel(rComponent);
+  fVerifyLogModel(rType);
   fVerifyLogModel(rLog);
-
   connect(pLogModel, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(fVerifyLogModel(QStandardItem*)));
 }
 
 void NCreatePackage::fDeleteLog() {
-  QModelIndexList lSelection = tvwUpgradeLog->selectionModel()->selectedIndexes();
+  QModelIndexList lSelection = tvwLog->selectionModel()->selectedIndexes();
   if(!lSelection.count())
     return;
   pLogModel->removeRow(lSelection.at(0).row());
+  pbtCreatePackage->setEnabled(fCheckUIStatus());
 }
 
 void NCreatePackage::fValidateParameter(const QString& lParameter) {
