@@ -255,7 +255,7 @@ void NMainWindow::showCreatePackage()
     subWindow->setWindowTitle(_createpackage->text().remove("&"));
     subWindow->setWindowIcon(_createpackage->icon());
     subWindow->show();
-    subWindow->resize(900,450);
+ //   subWindow->resize(900,450);
     pCreatePackage->show();
     _loadedSubWindows[_createpackage] = subWindow;
   }
