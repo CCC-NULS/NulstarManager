@@ -1,6 +1,7 @@
 #ifndef NCREATEPACKAGE_H
 #define NCREATEPACKAGE_H
 
+#include <QDir>
 #include <QFile>
 #include <QWidget>
 #include <NMessage.h>
@@ -29,7 +30,6 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
   private:
     const quint64 cMinNameSize = 3;
     const quint64 cMaxNameSize = 50;
-
     QStandardItemModel* pFileModel;
     QStandardItemModel* pLogModel;
     QSortFilterProxyModel* pProxyModelFiles;
@@ -42,6 +42,7 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     void fAddLog();
     void fDeleteLog();
     void fLoadFiles();
+    void fProcessFiles(const QDir& lDir);
     void fVerifyLogModel(QStandardItem* rItem);
     void fLoadTables();
     void fValidateParameter(const QString& lParameter);

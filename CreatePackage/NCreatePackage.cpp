@@ -1,5 +1,7 @@
+#include <QCryptographicHash>
 #include <QDesktopWidget>
 #include <QDate>
+#include <QFileDialog>
 #include <QFont>
 #include <QIcon>
 #include <QList>
@@ -16,6 +18,9 @@
 
 #include "NCreatePackage.h"
 
+const QString cLibrariesDirectory("Libraries");
+const QString cModulesDirectory("Modules");
+
 NCreatePackage::NCreatePackage(QWidget* parent)
          : QWidget(parent) {
   setupUi(this);
@@ -26,7 +31,7 @@ NCreatePackage::NCreatePackage(QWidget* parent)
 
 void NCreatePackage::fCreateModel() {
   QStringList lHeaders;
-  lHeaders << tr("Directory") << tr("File Name") << tr("Size") << tr("Hash");
+  lHeaders << tr("Directory") << tr("File Name") << tr("Size") << tr("Hash - Sha256 Base64");
   pFileModel = new QStandardItemModel(0, 4, this);
   pFileModel->setHorizontalHeaderLabels(lHeaders);
 
@@ -101,7 +106,130 @@ void NCreatePackage::fSetStatus(QLineEdit* rLineEdit, bool fStatus) {
 }
 
 void NCreatePackage::fLoadFiles() {
+  QFileDialog lFileDialog(this);
+  lFileDialog.setFileMode(QFileDialog::Directory);
+  QString lDirName = lFileDialog.getExistingDirectory(this, tr("Directory"), QString(), QFileDialog::ShowDirsOnly);
+  pFileModel->removeRows(0, pFileModel->rowCount());
+  pbtCreatePackage->setEnabled(fCheckUIStatus());
+  if(lDirName.isEmpty())
+    return;
+  bool lSuccess = fProcessFiles(lDirName);
+  pbtCreatePackage->setEnabled(lSuccess && fCheckUIStatus());
+}
 
+bool NCreatePackage::fProcessLibraries(const QDir& lDir) {
+
+}
+
+bool NCreatePackage::fProcessModules(const QDir& lDir) {
+
+}
+
+bool NCreatePackage::fProcessFiles(const QDir& lDir) {
+  QStringList lFileEntries = lDir.entryList(QDir::Files | QDir::CaseSensitive | QDir::NoSymLinks);
+  QStringList lDirEntries = lDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+  for(const QString& lFile : lFileEntries) {
+    QFile lFilePath(QString("%1/%2").arg(lDir.path()).arg(lFile));
+    if(!lFilePath.open(QIODevice::ReadOnly)) {
+      QString lMessage(tr("Unable to read file '%1'").arg(lFilePath.fileName()));
+      emit sEventGenerated(5002003,lMessage, NMessage::ErrorMessage);
+      return;
+    }
+    QByteArray lFileContents = lFilePath.readAll();
+    QString lHash = QString(QCryptographicHash::hash(lFileContents,QCryptographicHash::Sha256).toBase64());
+    QStandardItem* lDirectory = new QStandardItem(lDir.dirName());
+    lDirectory->setData(lDir.path(), Qt::ToolTipRole);
+    QStandardItem* lFileName = new QStandardItem(lFile);
+    QStandardItem* lSize = new QStandardItem(QString::number(lFilePath.size()));
+    QStandardItem* lFileHash = new QStandardItem(lHash);
+    QList<QStandardItem* > lItemList({lDirectory, lFileName, lSize, lFileHash});
+    pFileModel->appendRow(lItemList);
+  /*     QString contentHash;
+       if(file.endsWith(".pdz")) {
+         QDir tmp(dir.absolutePath() + "/" + temporalDir);
+         if(tmp.removeRecursively())  {
+           tmp.mkpath(qApp->applicationDirPath() + "/" + temporalDir);
+           QStringList extractedFiles = JlCompress::extractDir(dir.absoluteFilePath(file), qApp->applicationDirPath() + "/" + temporalDir);
+           extractedFiles.sort();
+           foreach(const QString& extractedFile, extractedFiles) {
+             QFile fileextracted(extractedFile);
+             QFileInfo finfo(extractedFile);
+             if(finfo.isFile() && !finfo.isHidden() && !finfo.isSymLink()) {
+               if(!fileextracted.open(QIODevice::ReadOnly))  {
+                 emit eventGenerated(tr("Unable to open file '%1'").arg(extractedFile) , WCMessage::ErrorMessage);
+                 return;
+               }
+               QByteArray fileExtContents = fileextracted.readAll();
+               contentHash += QString(QCryptographicHash::hash(fileExtContents,QCryptographicHash::Sha1).toBase64());
+             }
+           }
+           contentHash = QString(QCryptographicHash::hash(contentHash.toUtf8(),QCryptographicHash::Sha1).toBase64());
+          }
+          else emit eventGenerated(tr("Unable to remove temporal directory '%1'").arg(tmp.absolutePath()) , WCMessage::WarningMessage);
+       }
+       QString region = WCVersion::fileRegion(file);
+       QString relPath = dir.absolutePath();
+       relPath.remove(baseDir.absolutePath());
+       if(relPath.simplified().isEmpty())
+         relPath = ".";
+       else
+         relPath.remove(0,1); // Extract character '/'
+
+       if(_objects.contains(object))
+       {
+          QString osString;
+          if(!_objectMultiOS.value(object))
+            osString = QString("-%1").arg(cbxOperatingSystem->itemData(cbxOperatingSystem->currentIndex(), Qt::UserRole).toString());
+          QString url = QString("%1-%2%3").arg(file).arg(WCVersion::worldcoinManagerVersionCompressed(ledVersion->text())).arg(osString);
+
+          QList<QStandardItem* > items;
+          QString codRegion;
+          QStandardItem* key = new QStandardItem();
+          QStandardItem* master = new QStandardItem();
+          QStandardItem* obj = new QStandardItem(object);
+          obj->setData(_objects.value(object), Qt::UserRole);
+          // Select flag
+          if(region.simplified().isEmpty())
+            codRegion = "1";
+          else
+          {
+            if(_regions.contains(region))
+              codRegion = _regions.value(region);
+            else
+              emit eventGenerated(tr("Unable to associate file '%1' to a region").arg(file) , WCMessage::WarningMessage);
+          }
+          QIcon flag;
+          if(codRegion == "1")  // Standard
+            flag.addFile(":/Resources/Images/FlagStandard.png");
+          if(codRegion == "2")  // Bolivia
+            flag.addFile(":/Resources/Images/FlagBolivia.png");
+          //
+          QStandardItem* fname = new QStandardItem(file);
+          fname->setData(flag, Qt::DecorationRole);
+          fname->setData(hash, Qt::ToolTipRole);
+          fname->setData(WCConstants::darkBlue(), Qt::ForegroundRole);
+          QStandardItem* opsys = new QStandardItem(QString::number(os));
+          QStandardItem* regi = new QStandardItem(codRegion);
+          QStandardItem* sizei = new QStandardItem(QString::number(filedef.size()));
+          sizei->setData(WCConstants::darkGreen(), Qt::ForegroundRole);
+          sizei->setData( Qt::AlignRight, Qt::TextAlignmentRole);
+          QStandardItem* hashi = new QStandardItem(hash);
+          hashi->setData(contentHash, Qt::UserRole + 101);
+          QStandardItem* relpathi = new QStandardItem(relPath);
+          QFont curFont = relpathi->font();
+          curFont.setItalic(true);
+          relpathi->setFont(curFont);
+          relpathi->setData(url, Qt::ToolTipRole);
+          relpathi->setData(WCConstants::darkBlue(), Qt::ForegroundRole);
+          QStandardItem* urli = new QStandardItem(url);
+          items << key << master << obj << fname << opsys << regi << sizei << hashi << relpathi << urli;
+          _fileModel->appendRow(items);
+       }
+       else
+       {
+          emit eventGenerated(tr("Unable to find file '%1' in objects table").arg(file) , WCMessage::WarningMessage);
+       }*/
+    }
 }
 
 void NCreatePackage::fVerifyLogModel(QStandardItem* rItem) {
@@ -129,6 +257,8 @@ bool NCreatePackage::fCheckUIStatus() const
     return false;
 
   if(pLogModel->rowCount() == 0)
+    return false;
+  if(pFileModel->rowCount() == 0)
     return false;
 
   for(int i = 0; i < pLogModel->rowCount(); i++)
