@@ -26,6 +26,7 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
 
   protected:
     void fLoadPlatform();
+    void fLoadSoftware();
 
   private:
     const quint64 cMinNameSize = 3;
@@ -35,6 +36,7 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     QSortFilterProxyModel* pProxyModelFiles;
     QSortFilterProxyModel* pProxyModelLog;
     QFile mCreatePackageFile;
+    QString mCreatePackageDirectory;
     void fSetStatus(QLineEdit* rLineEdit, bool fStatus);
 
   public slots:
@@ -42,10 +44,14 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     void fAddLog();
     void fDeleteLog();
     void fLoadFiles();
-    void fProcessFiles(const QDir& lDir);
+    bool fProcessDirectories(const QDir& lDir);
+    bool fProcessFiles(const QDir& lDir, const QString& lRelativePath);
+    bool fProcessLibraries(const QDir& lDir);
+    bool fProcessModules(const QDir& lDir);
     void fVerifyLogModel(QStandardItem* rItem);
     void fLoadTables();
     void fValidateParameter(const QString& lParameter);
+    bool fCreatePackageDirectory(const QString& lPath);
 
   signals:
     void sEventGenerated(int lCode,QString lMessage,int lType);

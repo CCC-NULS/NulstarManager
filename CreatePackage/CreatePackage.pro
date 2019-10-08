@@ -13,7 +13,9 @@ FORMS += NCreatePackage.ui
 RESOURCES += NCreatePackage.qrc
 INCLUDEPATH += $$TOP_BUILDDIR/$$TARGET \
                ../Definitions \
-               ../Tools
+               ../Tools \
+               ../QuaZIP
 LIBS += -L$$DESTDIR \
         -lDefinitions \
+        -lQuaZIP \
         -lTools

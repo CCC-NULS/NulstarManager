@@ -1,6 +1,8 @@
+#include <QApplication>
 #include <QCryptographicHash>
 #include <QDesktopWidget>
 #include <QDate>
+#include <QDialog>
 #include <QFileDialog>
 #include <QFont>
 #include <QIcon>
@@ -13,6 +15,8 @@
 #include <QStringList>
 #include <QTextStream>
 #include <QTime>
+#include <QVersionNumber>
+#include <JlCompress.h>
 #include <NConstants.h>
 #include <NValidatorCreator.h>
 
@@ -31,7 +35,7 @@ NCreatePackage::NCreatePackage(QWidget* parent)
 
 void NCreatePackage::fCreateModel() {
   QStringList lHeaders;
-  lHeaders << tr("Directory") << tr("File Name") << tr("Size") << tr("Hash - Sha256 Base64");
+  lHeaders << tr("Relative Directory") << tr("File Name") << tr("Size") << tr("Hash - Sha256 Base64");
   pFileModel = new QStandardItemModel(0, 4, this);
   pFileModel->setHorizontalHeaderLabels(lHeaders);
 
@@ -52,17 +56,16 @@ void NCreatePackage::fCreateModel() {
 
   tvwFiles->setSortingEnabled(true);
   tvwFiles->setModel(pProxyModelFiles);
-  tvwFiles->sortByColumn(1, Qt::AscendingOrder);
+  tvwFiles->sortByColumn(0, Qt::AscendingOrder);
   tvwFiles->setColumnWidth(0,180);
   tvwFiles->setColumnWidth(1,180);
-  tvwFiles->setColumnWidth(1,110);
+  tvwFiles->setColumnWidth(2,110);
 
   tvwLog->setSortingEnabled(false);
   tvwLog->setModel(pProxyModelLog);
   tvwLog->setColumnWidth(0,110);
   tvwLog->setColumnWidth(1,110);
 
-  lblUpgradeCommand->hide();
   tvwUpgradeCommand->hide();
   tbtAddCommand->hide();
   tbtDeleteCommand->hide();
@@ -70,6 +73,7 @@ void NCreatePackage::fCreateModel() {
   dedDate->setProperty("Status", true);
   txtDescription->setProperty("Status", true);
   txtDescription->setStyleSheet(QString("background-color: rgb%1").arg(NConstants::colorToRgbText(NConstants::lightBlue())));
+  pFileModel->setProperty("Status", QString("0"));
 
   connect(tbtAddLog, SIGNAL(clicked()), this, SLOT(fAddLog()));
   connect(tbtDeleteLog, SIGNAL(clicked()), this, SLOT(fDeleteLog()));
@@ -110,22 +114,111 @@ void NCreatePackage::fLoadFiles() {
   lFileDialog.setFileMode(QFileDialog::Directory);
   QString lDirName = lFileDialog.getExistingDirectory(this, tr("Directory"), QString(), QFileDialog::ShowDirsOnly);
   pFileModel->removeRows(0, pFileModel->rowCount());
+  lblTotalFiles->setText("0");
+  lblTotalSize->setText("0");
   pbtCreatePackage->setEnabled(fCheckUIStatus());
   if(lDirName.isEmpty())
     return;
-  bool lSuccess = fProcessFiles(lDirName);
-  pbtCreatePackage->setEnabled(lSuccess && fCheckUIStatus());
+  bool lSuccess = fProcessDirectories(lDirName);
+  if(lSuccess)
+    pFileModel->setProperty("Status", QString("1"));
+  else
+    pFileModel->setProperty("Status", QString("0"));
+  pbtCreatePackage->setEnabled(fCheckUIStatus());
+  QDir lCreatePackageDir(lDirName);
+  lCreatePackageDir.cdUp();
+  mCreatePackageDirectory = lCreatePackageDir.path();
 }
 
 bool NCreatePackage::fProcessLibraries(const QDir& lDir) {
-
+  QStringList lLanguageEntries = lDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+  if(lLanguageEntries.isEmpty()) {
+    QString lMessage(tr("'%1' directory is empty.").arg(cLibrariesDirectory));
+    emit sEventGenerated(5002005,lMessage, NMessage::ErrorMessage);
+    return false;
+  }
+  for(const QString& lLanguage : lLanguageEntries) {
+    QDir lLanguageDir(QString("%1/%2").arg(lDir.path()).arg(lLanguage));
+    QStringList lLibraryEntries = lLanguageDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    if(lLibraryEntries.isEmpty()) {
+      QString lMessage(tr("No libraries found for language '%1'.").arg(lLanguage));
+      emit sEventGenerated(5002006,lMessage, NMessage::ErrorMessage);
+      return false;
+    }
+    for(const QString& lLibrary : lLibraryEntries) {
+      QDir lLibraryDir(QString("%1/%2").arg(lLanguageDir.path()).arg(lLibrary));
+      QStringList lVersionEntries = lLibraryDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+      if(lVersionEntries.isEmpty()) {
+        QString lMessage(tr("No versions found for library '%1'.").arg(lLibrary));
+        emit sEventGenerated(5002007,lMessage, NMessage::ErrorMessage);
+        return false;
+      }
+      QVersionNumber lCurrentMaxVersion(0,0,0);
+      QString lVersionString;
+      for(const QString& lVersion : lVersionEntries) {
+        QVersionNumber lCurrentVersion(QVersionNumber::fromString(lVersion));
+        if(lCurrentMaxVersion < lCurrentVersion) {
+           lCurrentMaxVersion = lCurrentVersion;
+           lVersionString = lVersion;
+        }
+      }
+      QDir lVersionDir(QString("%1/%2").arg(lLibraryDir.path()).arg(lVersionString));
+      QString lRelativePath(QString("%1/%2/%3/%4").arg(cLibrariesDirectory).arg(lLanguage).arg(lLibrary).arg(lVersionString));
+      if(!fProcessFiles(lVersionDir, lRelativePath))
+        return false;
+    }
+  }
+  return true;
 }
 
 bool NCreatePackage::fProcessModules(const QDir& lDir) {
-
+  QStringList lDomainEntries = lDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+  if(lDomainEntries.isEmpty()) {
+    QString lMessage(tr("'%1' directory is empty.").arg(cModulesDirectory));
+    emit sEventGenerated(5002008,lMessage, NMessage::ErrorMessage);
+    return false;
+  }
+  for(const QString& lDomain : lDomainEntries) {
+    QDir lDomainDir(QString("%1/%2").arg(lDir.path()).arg(lDomain));
+    QStringList lModuleEntries = lDomainDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    if(lModuleEntries.isEmpty()) {
+      QString lMessage(tr("No modules found for domain '%1'.").arg(lDomain));
+      emit sEventGenerated(5002009,lMessage, NMessage::ErrorMessage);
+      return false;
+    }
+    for(const QString& lModule : lModuleEntries) {
+      QDir lModuleDir(QString("%1/%2").arg(lDomainDir.path()).arg(lModule));
+      QStringList lVersionEntries = lModuleDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+      if(lVersionEntries.isEmpty() && (lModule != "libs")) {  // CHANGE!!!
+        QString lMessage(tr("No versions found for module '%1'.").arg(lModule));
+        emit sEventGenerated(5002010,lMessage, NMessage::ErrorMessage);
+        return false;
+      }
+      QVersionNumber lCurrentMaxVersion(0,0,0);
+      QString lVersionString;
+      for(const QString& lVersion : lVersionEntries) {
+        QVersionNumber lCurrentVersion(QVersionNumber::fromString(lVersion));
+        if(lCurrentMaxVersion < lCurrentVersion) {
+           lCurrentMaxVersion = lCurrentVersion;
+           lVersionString = lVersion;
+        }
+      }
+      QDir lVersionDir(QString("%1/%2").arg(lModuleDir.path()).arg(lVersionString));
+      QString lRelativePath(QString("%1/%2/%3/%4").arg(cModulesDirectory).arg(lDomain).arg(lModule).arg(lVersionString));
+      if(lModule == "libs") {   // CHANGE!!
+        lVersionDir.setPath(lModuleDir.path());
+        lRelativePath = QString("%1/%2/%3").arg(cModulesDirectory).arg(lDomain).arg(lModule);
+        QString lMessage(tr("'%1' modules has no versions!").arg(lModule));
+        emit sEventGenerated(5002011,lMessage, NMessage::WarningMessage);
+      }
+      if(!fProcessFiles(lVersionDir, lRelativePath))
+        return false;
+    }
+  }
+  return true;
 }
 
-bool NCreatePackage::fProcessFiles(const QDir& lDir) {
+bool NCreatePackage::fProcessFiles(const QDir& lDir, const QString& lRelativePath) {
   QStringList lFileEntries = lDir.entryList(QDir::Files | QDir::CaseSensitive | QDir::NoSymLinks);
   QStringList lDirEntries = lDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
   for(const QString& lFile : lFileEntries) {
@@ -133,103 +226,67 @@ bool NCreatePackage::fProcessFiles(const QDir& lDir) {
     if(!lFilePath.open(QIODevice::ReadOnly)) {
       QString lMessage(tr("Unable to read file '%1'").arg(lFilePath.fileName()));
       emit sEventGenerated(5002003,lMessage, NMessage::ErrorMessage);
-      return;
+      return false;
     }
     QByteArray lFileContents = lFilePath.readAll();
     QString lHash = QString(QCryptographicHash::hash(lFileContents,QCryptographicHash::Sha256).toBase64());
-    QStandardItem* lDirectory = new QStandardItem(lDir.dirName());
+    QStandardItem* lDirectory = new QStandardItem(lRelativePath);
     lDirectory->setData(lDir.path(), Qt::ToolTipRole);
     QStandardItem* lFileName = new QStandardItem(lFile);
     QStandardItem* lSize = new QStandardItem(QString::number(lFilePath.size()));
     QStandardItem* lFileHash = new QStandardItem(lHash);
     QList<QStandardItem* > lItemList({lDirectory, lFileName, lSize, lFileHash});
     pFileModel->appendRow(lItemList);
-  /*     QString contentHash;
-       if(file.endsWith(".pdz")) {
-         QDir tmp(dir.absolutePath() + "/" + temporalDir);
-         if(tmp.removeRecursively())  {
-           tmp.mkpath(qApp->applicationDirPath() + "/" + temporalDir);
-           QStringList extractedFiles = JlCompress::extractDir(dir.absoluteFilePath(file), qApp->applicationDirPath() + "/" + temporalDir);
-           extractedFiles.sort();
-           foreach(const QString& extractedFile, extractedFiles) {
-             QFile fileextracted(extractedFile);
-             QFileInfo finfo(extractedFile);
-             if(finfo.isFile() && !finfo.isHidden() && !finfo.isSymLink()) {
-               if(!fileextracted.open(QIODevice::ReadOnly))  {
-                 emit eventGenerated(tr("Unable to open file '%1'").arg(extractedFile) , WCMessage::ErrorMessage);
-                 return;
-               }
-               QByteArray fileExtContents = fileextracted.readAll();
-               contentHash += QString(QCryptographicHash::hash(fileExtContents,QCryptographicHash::Sha1).toBase64());
-             }
-           }
-           contentHash = QString(QCryptographicHash::hash(contentHash.toUtf8(),QCryptographicHash::Sha1).toBase64());
-          }
-          else emit eventGenerated(tr("Unable to remove temporal directory '%1'").arg(tmp.absolutePath()) , WCMessage::WarningMessage);
-       }
-       QString region = WCVersion::fileRegion(file);
-       QString relPath = dir.absolutePath();
-       relPath.remove(baseDir.absolutePath());
-       if(relPath.simplified().isEmpty())
-         relPath = ".";
-       else
-         relPath.remove(0,1); // Extract character '/'
+    qApp->processEvents();
+  }
+  bool lSuccess(true);
+  for(const QString& lDirName : lDirEntries) {
+    QString lNewPath(QString("%1/%2").arg(lRelativePath).arg(lDirName));
+    lSuccess = lSuccess && fProcessFiles(QDir(QString("%1/%2").arg(lDir.path()).arg(lDirName)), lNewPath);
+  }
+  return lSuccess;
+}
 
-       if(_objects.contains(object))
-       {
-          QString osString;
-          if(!_objectMultiOS.value(object))
-            osString = QString("-%1").arg(cbxOperatingSystem->itemData(cbxOperatingSystem->currentIndex(), Qt::UserRole).toString());
-          QString url = QString("%1-%2%3").arg(file).arg(WCVersion::worldcoinManagerVersionCompressed(ledVersion->text())).arg(osString);
-
-          QList<QStandardItem* > items;
-          QString codRegion;
-          QStandardItem* key = new QStandardItem();
-          QStandardItem* master = new QStandardItem();
-          QStandardItem* obj = new QStandardItem(object);
-          obj->setData(_objects.value(object), Qt::UserRole);
-          // Select flag
-          if(region.simplified().isEmpty())
-            codRegion = "1";
-          else
-          {
-            if(_regions.contains(region))
-              codRegion = _regions.value(region);
-            else
-              emit eventGenerated(tr("Unable to associate file '%1' to a region").arg(file) , WCMessage::WarningMessage);
-          }
-          QIcon flag;
-          if(codRegion == "1")  // Standard
-            flag.addFile(":/Resources/Images/FlagStandard.png");
-          if(codRegion == "2")  // Bolivia
-            flag.addFile(":/Resources/Images/FlagBolivia.png");
-          //
-          QStandardItem* fname = new QStandardItem(file);
-          fname->setData(flag, Qt::DecorationRole);
-          fname->setData(hash, Qt::ToolTipRole);
-          fname->setData(WCConstants::darkBlue(), Qt::ForegroundRole);
-          QStandardItem* opsys = new QStandardItem(QString::number(os));
-          QStandardItem* regi = new QStandardItem(codRegion);
-          QStandardItem* sizei = new QStandardItem(QString::number(filedef.size()));
-          sizei->setData(WCConstants::darkGreen(), Qt::ForegroundRole);
-          sizei->setData( Qt::AlignRight, Qt::TextAlignmentRole);
-          QStandardItem* hashi = new QStandardItem(hash);
-          hashi->setData(contentHash, Qt::UserRole + 101);
-          QStandardItem* relpathi = new QStandardItem(relPath);
-          QFont curFont = relpathi->font();
-          curFont.setItalic(true);
-          relpathi->setFont(curFont);
-          relpathi->setData(url, Qt::ToolTipRole);
-          relpathi->setData(WCConstants::darkBlue(), Qt::ForegroundRole);
-          QStandardItem* urli = new QStandardItem(url);
-          items << key << master << obj << fname << opsys << regi << sizei << hashi << relpathi << urli;
-          _fileModel->appendRow(items);
-       }
-       else
-       {
-          emit eventGenerated(tr("Unable to find file '%1' in objects table").arg(file) , WCMessage::WarningMessage);
-       }*/
+bool NCreatePackage::fProcessDirectories(const QDir& lDir) {
+  QStringList lFileEntries = lDir.entryList(QDir::Files | QDir::CaseSensitive | QDir::NoSymLinks);
+  //QStringList lDirEntries = lDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+  for(const QString& lFile : lFileEntries) {
+    QFile lFilePath(QString("%1/%2").arg(lDir.path()).arg(lFile));
+    if(!lFilePath.open(QIODevice::ReadOnly)) {
+      QString lMessage(tr("Unable to read file '%1'").arg(lFilePath.fileName()));
+      emit sEventGenerated(5002003,lMessage, NMessage::ErrorMessage);
+      return false;
     }
+    QByteArray lFileContents = lFilePath.readAll();
+    QString lHash = QString(QCryptographicHash::hash(lFileContents,QCryptographicHash::Sha256).toBase64());
+    QStandardItem* lDirectory = new QStandardItem(".");
+    lDirectory->setData(lDir.path(), Qt::ToolTipRole);
+    QStandardItem* lFileName = new QStandardItem(lFile);
+    QStandardItem* lSize = new QStandardItem(QString::number(lFilePath.size()));
+    QStandardItem* lFileHash = new QStandardItem(lHash);
+    QList<QStandardItem* > lItemList({lDirectory, lFileName, lSize, lFileHash});
+    pFileModel->appendRow(lItemList);
+  }
+  bool lSuccess = false;
+  QDir lLibrariesDir(QString("%1/%2").arg(lDir.path()).arg(cLibrariesDirectory));
+  if(lLibrariesDir.exists()) {
+    lSuccess = fProcessLibraries(lLibrariesDir);
+  }
+  QDir lModulesDir(QString("%1/%2").arg(lDir.path()).arg(cModulesDirectory));
+  if(!lModulesDir.exists()) {
+    QString lMessage(tr("Directory '%1' doesn't exist!").arg(cLibrariesDirectory));
+    emit sEventGenerated(5002004,lMessage, NMessage::ErrorMessage);
+    lSuccess = false;
+  }
+  lSuccess = lSuccess && fProcessModules(lModulesDir);
+  lblTotalFiles->setText(QString::number(pFileModel->rowCount()));
+  quint64 lTotalSize = 0;
+  for(int i = 0; i < pFileModel->rowCount(); i++) {
+    lTotalSize += pFileModel->data(pFileModel->index(i,2), Qt::DisplayRole).toULongLong();
+  }
+  lTotalSize = lTotalSize / (1024 * 1024);
+  lblTotalSize->setText(QString::number(lTotalSize));
+  return lSuccess;
 }
 
 void NCreatePackage::fVerifyLogModel(QStandardItem* rItem) {
@@ -270,11 +327,64 @@ bool NCreatePackage::fCheckUIStatus() const
     if(pLogModel->item(i,2)->data(NConstants::StatusRole).toString() == "0")
       return false;
   }
+  if(pFileModel->property("Status") != QString("1"))
+    return false;
   return true;
 }
 
 void NCreatePackage::fCreatePackage() {
+  QString lCreatePackageDirectory = QString("%1/%2_%3_%4").arg(mCreatePackageDirectory).arg(cbxSoftware->currentText()).arg(cbxPlatform->currentText()).arg(ledVersion->text());
+  if(fCreatePackageDirectory(lCreatePackageDirectory)) {
+    qApp->processEvents();
+    QStringList lFilesToPack;
+    for(int i = 0; i < pFileModel->rowCount(); i++) {
+      QString lFile(QString("%1/%2").arg(pFileModel->data(pFileModel->index(i,0), Qt::ToolTipRole).toString()).arg(pFileModel->data(pFileModel->index(i,1), Qt::DisplayRole).toString()));
+      lFilesToPack << lFile;
+    }
+    QDialog lCompressingDialog(nullptr, Qt::Popup);
+    lCompressingDialog.show();
+    JlCompress::compressFiles(QString("%1/lsls").arg(lCreatePackageDirectory), lFilesToPack);
+    qApp->processEvents();
+    JlCompress::compressDir(QString("%1/lsls.zip").arg(lCreatePackageDirectory), QString("/home/Berzeck/Templates/Nuls2.1"));
+    QString lMessage(tr("Package '%1' has been created successfully.").arg(lCreatePackageDirectory));
+    emit sEventGenerated(5002035,lMessage, NMessage::SuccessMessage);
+  }
+}
 
+bool NCreatePackage::fCreatePackageDirectory(const QString& lPath) {
+  QDir lCreatePackageDirectory(lPath);
+  if(lCreatePackageDirectory.exists()) {
+    QMessageBox lMsgBox;
+    lMsgBox.setText(tr("Directory '%1' already exists!").arg(lPath));
+    lMsgBox.setInformativeText("Do you want to replace it?");
+    lMsgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    lMsgBox.setDefaultButton(QMessageBox::Ok);
+    int lReturn = lMsgBox.exec();
+    if(lReturn == QMessageBox::Ok) {
+      if(lCreatePackageDirectory.removeRecursively()) {
+        QString lMessage(tr("Directory '%1' has been removed successfully.").arg(lPath));
+        emit sEventGenerated(5002030,lMessage, NMessage::SuccessMessage);
+      }
+      else {
+        QString lMessage(tr("Directory '%1' couldn't be removed!").arg(lPath));
+        emit sEventGenerated(5002031,lMessage, NMessage::ErrorMessage);
+        return false;
+      }
+    }
+    else {
+      QString lMessage(tr("Package creation canceled."));
+      emit sEventGenerated(5002032,lMessage, NMessage::InfoMessage);
+      return false;
+    }
+  }
+  if(lCreatePackageDirectory.mkpath(lPath)) {
+    QString lMessage(tr("Directory '%1' has been created successfully.").arg(lPath));
+    emit sEventGenerated(5002033,lMessage, NMessage::SuccessMessage);
+    return true;
+  }
+  QString lMessage(tr("Directory '%1' couldn't be created.").arg(lPath));
+  emit sEventGenerated(5002034,lMessage, NMessage::ErrorMessage);
+  return false;
 }
 
 void NCreatePackage::fLoadTables() {
@@ -285,6 +395,32 @@ void NCreatePackage::fLoadTables() {
   cbxPriority->addItem(QIcon(":/Resources/Images/CircleOrange.png"), tr("High Priority"),QString("3"));
   cbxPriority->addItem(QIcon(":/Resources/Images/CircleRed.png"), tr("Critical Priority"),QString("4"));
   fLoadPlatform();
+  fLoadSoftware();
+}
+
+void NCreatePackage::fLoadSoftware() {
+  QFile lSoftwareFile;
+  lSoftwareFile.setFileName("Software.ndd");
+  if(lSoftwareFile.open(QFile::ReadOnly)) {
+    cbxSoftware->clear();
+    QTextStream lStream(&lSoftwareFile);
+    while(!lStream.atEnd()) {
+      QString lLine = lStream.readLine();
+      QStringList lRecord = lLine.split("|");
+      if(lRecord.size() == 3) {
+        cbxSoftware->addItem(lRecord.at(1),lRecord.at(0));
+      }
+      else {
+        QString lMessage(tr("Software.ndd has incorrect number of fields."));
+        emit sEventGenerated(5002020, lMessage, NMessage::ErrorMessage);
+      }
+    }
+    lSoftwareFile.close();
+  }
+  else {
+    QString lMessage(tr("Software.ndd file could not be opened! Impossible to create package!"));
+    emit sEventGenerated(5002021,lMessage, NMessage::ErrorMessage);
+  }
 }
 
 void NCreatePackage::fLoadPlatform() {
