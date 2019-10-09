@@ -6,6 +6,8 @@
 #include <QFileDialog>
 #include <QFont>
 #include <QIcon>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QList>
 #include <QMessageBox>
 #include <QModelIndexList>
@@ -24,6 +26,8 @@
 
 const QString cLibrariesDirectory("Libraries");
 const QString cModulesDirectory("Modules");
+const QString cExec("Exec");
+const QString cTempDir("Temp");
 
 NCreatePackage::NCreatePackage(QWidget* parent)
          : QWidget(parent) {
@@ -333,21 +337,49 @@ bool NCreatePackage::fCheckUIStatus() const
 }
 
 void NCreatePackage::fCreatePackage() {
-  QString lCreatePackageDirectory = QString("%1/%2_%3_%4").arg(mCreatePackageDirectory).arg(cbxSoftware->currentText()).arg(cbxPlatform->currentText()).arg(ledVersion->text());
+  QString lPackageName(QString("%1_%2_%3").arg(cbxSoftware->currentText()).arg(cbxPlatform->currentText()).arg(ledVersion->text()));
+  QString lCreatePackageDirectory = QString("%1/%2").arg(mCreatePackageDirectory).arg(lPackageName);
   if(fCreatePackageDirectory(lCreatePackageDirectory)) {
     qApp->processEvents();
-    QStringList lFilesToPack;
+    QDialog* rCompressingDialog = new QDialog(nullptr, Qt::Popup);
+    QLabel* rText = new QLabel(tr("Creating packages, this can take a few seconds ..."), nullptr);
+    QHBoxLayout* rLayout = new QHBoxLayout();
+    rLayout->addWidget(rText);
+    rCompressingDialog->setLayout(rLayout);
+    rCompressingDialog->show();
+    qApp->processEvents();
+
+    QDir lCurrentDir;
+    if(!(lCurrentDir.mkpath(QString("%1/%2").arg(lCreatePackageDirectory).arg(cExec)) && lCurrentDir.mkpath(QString("%1/%2").arg(lCreatePackageDirectory).arg(cLibrariesDirectory)) && lCurrentDir.mkpath(QString("%1/%2").arg(lCreatePackageDirectory).arg(cModulesDirectory)))) {
+      QString lMessage(tr("Package main directories couldn't be created."));
+      emit sEventGenerated(5002040,lMessage, NMessage::ErrorMessage);
+      return;
+    }
     for(int i = 0; i < pFileModel->rowCount(); i++) {
       QString lFile(QString("%1/%2").arg(pFileModel->data(pFileModel->index(i,0), Qt::ToolTipRole).toString()).arg(pFileModel->data(pFileModel->index(i,1), Qt::DisplayRole).toString()));
-      lFilesToPack << lFile;
+      QString lTempDirName(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(pFileModel->data(pFileModel->index(i,0), Qt::DisplayRole).toString()));
+      QString lTargetFileName(QString("%1/%2").arg(lTempDirName).arg(pFileModel->data(pFileModel->index(i,1), Qt::DisplayRole).toString()));
+      qApp->processEvents();
+      if(lCurrentDir.mkpath(lTempDirName)) {
+        if(!QFile::copy(lFile, lTargetFileName)) {
+          QString lMessage(tr("File '%1' couldn't be copied to temporary directory.").arg(lFile));
+          emit sEventGenerated(5002039,lMessage, NMessage::ErrorMessage);
+          return;
+        }
+      }
+      else {
+        QString lMessage(tr("Directory '%1' couldn't be created.").arg(lTempDirName));
+        emit sEventGenerated(5002038,lMessage, NMessage::ErrorMessage);
+        return;
+      }
     }
-    QDialog lCompressingDialog(nullptr, Qt::Popup);
-    lCompressingDialog.show();
-    JlCompress::compressFiles(QString("%1/lsls").arg(lCreatePackageDirectory), lFilesToPack);
+
+    //JlCompress::compressFiles(QString("%1/lsls").arg(lCreatePackageDirectory), lFilesToPack);
     qApp->processEvents();
-    JlCompress::compressDir(QString("%1/lsls.zip").arg(lCreatePackageDirectory), QString("/home/Berzeck/Templates/Nuls2.1"));
+    JlCompress::compressDir(QString("%1/%2.zip").arg(lCreatePackageDirectory).arg(lPackageName), QString("%1/%2").arg(lCreatePackageDirectory).arg(cTempDir));
     QString lMessage(tr("Package '%1' has been created successfully.").arg(lCreatePackageDirectory));
     emit sEventGenerated(5002035,lMessage, NMessage::SuccessMessage);
+    rCompressingDialog->deleteLater();
   }
 }
 
@@ -378,9 +410,16 @@ bool NCreatePackage::fCreatePackageDirectory(const QString& lPath) {
     }
   }
   if(lCreatePackageDirectory.mkpath(lPath)) {
-    QString lMessage(tr("Directory '%1' has been created successfully.").arg(lPath));
-    emit sEventGenerated(5002033,lMessage, NMessage::SuccessMessage);
-    return true;
+    if(lCreatePackageDirectory.mkpath(QString("%1/%2").arg(lPath).arg(cTempDir))) {
+      QString lMessage(tr("Directory '%1' and '%2' have been created successfully.").arg(lPath).arg(cTempDir));
+      emit sEventGenerated(5002036,lMessage, NMessage::SuccessMessage);
+      return true;
+    }
+    else {
+      QString lMessage(tr("Directory '%1' couldn't be created.").arg(cTempDir));
+      emit sEventGenerated(5002037,lMessage, NMessage::ErrorMessage);
+      return false;
+    }
   }
   QString lMessage(tr("Directory '%1' couldn't be created.").arg(lPath));
   emit sEventGenerated(5002034,lMessage, NMessage::ErrorMessage);

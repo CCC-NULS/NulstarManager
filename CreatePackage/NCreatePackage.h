@@ -35,7 +35,6 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     QStandardItemModel* pLogModel;
     QSortFilterProxyModel* pProxyModelFiles;
     QSortFilterProxyModel* pProxyModelLog;
-    QFile mCreatePackageFile;
     QString mCreatePackageDirectory;
     void fSetStatus(QLineEdit* rLineEdit, bool fStatus);
 
