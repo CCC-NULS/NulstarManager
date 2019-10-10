@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QList>
+#include <QMap>
 #include <QMessageBox>
 #include <QModelIndexList>
 #include <QSortFilterProxyModel>
@@ -342,7 +343,8 @@ void NCreatePackage::fCreatePackage() {
   if(fCreatePackageDirectory(lCreatePackageDirectory)) {
     qApp->processEvents();
     QDialog* rCompressingDialog = new QDialog(nullptr, Qt::Popup);
-    QLabel* rText = new QLabel(tr("Creating packages, this can take a few seconds ..."), nullptr);
+    QString lProcessingText(tr("Creating packages, this can take a few seconds ...\n"));
+    QLabel* rText = new QLabel(lProcessingText, nullptr);
     QHBoxLayout* rLayout = new QHBoxLayout();
     rLayout->addWidget(rText);
     rCompressingDialog->setLayout(rLayout);
@@ -355,9 +357,36 @@ void NCreatePackage::fCreatePackage() {
       emit sEventGenerated(5002040,lMessage, NMessage::ErrorMessage);
       return;
     }
+    QStringList lExecFiles;
+    QStringList lLibDirectories;
+    QStringList lModuleDirectories;
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Scanning files and creating temporal directory ... Task (1/5)")));
     for(int i = 0; i < pFileModel->rowCount(); i++) {
+      QString lRelativeFileDirectory(pFileModel->data(pFileModel->index(i,0), Qt::DisplayRole).toString());
+      if(lRelativeFileDirectory.section('/',0,0) == cLibrariesDirectory) {
+        QString lCurrentRelativeDir;
+        if(lRelativeFileDirectory.split('/').size() >= 4)
+          lCurrentRelativeDir = lRelativeFileDirectory.section('/',0,3);
+        else
+          lCurrentRelativeDir = lRelativeFileDirectory.section('/',0, lRelativeFileDirectory.split('/').size());
+
+        if(!lLibDirectories.contains(lCurrentRelativeDir))
+          lLibDirectories << lCurrentRelativeDir;
+      }
+      if(lRelativeFileDirectory.section('/',0,0) == cModulesDirectory) {
+        QString lCurrentRelativeDir;
+        if(lRelativeFileDirectory.split('/').size() >= 4)
+           lCurrentRelativeDir = lRelativeFileDirectory.section('/',0,3);
+        else
+           lCurrentRelativeDir = lRelativeFileDirectory.section('/',0, lRelativeFileDirectory.split('/').size());
+
+        if(!lModuleDirectories.contains(lCurrentRelativeDir))
+          lModuleDirectories << lCurrentRelativeDir;
+      }
       QString lFile(QString("%1/%2").arg(pFileModel->data(pFileModel->index(i,0), Qt::ToolTipRole).toString()).arg(pFileModel->data(pFileModel->index(i,1), Qt::DisplayRole).toString()));
-      QString lTempDirName(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(pFileModel->data(pFileModel->index(i,0), Qt::DisplayRole).toString()));
+      if(lRelativeFileDirectory.simplified() == ".")
+        lExecFiles << lFile;
+      QString lTempDirName(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(lRelativeFileDirectory));
       QString lTargetFileName(QString("%1/%2").arg(lTempDirName).arg(pFileModel->data(pFileModel->index(i,1), Qt::DisplayRole).toString()));
       qApp->processEvents();
       if(lCurrentDir.mkpath(lTempDirName)) {
@@ -373,10 +402,26 @@ void NCreatePackage::fCreatePackage() {
         return;
       }
     }
-
-    //JlCompress::compressFiles(QString("%1/lsls").arg(lCreatePackageDirectory), lFilesToPack);
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating package for executables ... Task (2/5)")));
+    qApp->processEvents();
+    JlCompress::compressFiles(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cExec).arg(QString("%1_%2_%3_%4").arg(cbxSoftware->currentText()).arg(cExec).arg(cbxPlatform->currentText()).arg(ledVersion->text())), lExecFiles);
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating package for manual download ... Task (3/5)")));
     qApp->processEvents();
     JlCompress::compressDir(QString("%1/%2.zip").arg(lCreatePackageDirectory).arg(lPackageName), QString("%1/%2").arg(lCreatePackageDirectory).arg(cTempDir));
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating library packages ... Task (4/5)")));
+    qApp->processEvents();
+    for(const QString& lLibrary : lLibDirectories) {
+      QStringList lLibraryList(lLibrary.split('/'));
+      QString lLibraryName(QString("Library_%1_%2_%3").arg(lLibraryList.at(1)).arg(lLibraryList.at(2)).arg(lLibraryList.size() >= 4 ? lLibraryList.at(3) : ledVersion->text()));
+      JlCompress::compressDir(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cLibrariesDirectory).arg(lLibraryName), QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(lLibrary));
+    }
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating module packages ... Task (5/5)")));
+    qApp->processEvents();
+    for(const QString& lModule : lModuleDirectories) {
+      QStringList lModuleList(lModule.split('/'));
+      QString lModuleName(QString("Module_%1_%2_%3").arg(lModuleList.at(1)).arg(lModuleList.at(2)).arg(lModuleList.size() >= 4 ? lModuleList.at(3) : ledVersion->text()));
+      JlCompress::compressDir(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cModulesDirectory).arg(lModuleName), QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(lModule));
+    }
     QString lMessage(tr("Package '%1' has been created successfully.").arg(lCreatePackageDirectory));
     emit sEventGenerated(5002035,lMessage, NMessage::SuccessMessage);
     rCompressingDialog->deleteLater();
