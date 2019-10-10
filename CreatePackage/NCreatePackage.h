@@ -23,6 +23,7 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     void fCreateValidators();
     bool fCheckUIStatus() const;
     bool fStatus(const QLineEdit* rLineEdit) const { return rLineEdit->property("Status").toBool(); }
+    QByteArray fFileChecksum(const QString& lFileName);
 
   protected:
     void fLoadPlatform();
@@ -37,6 +38,8 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     QSortFilterProxyModel* pProxyModelLog;
     QString mCreatePackageDirectory;
     void fSetStatus(QLineEdit* rLineEdit, bool fStatus);
+    void fWritePackageSummary(const QString &lManifestFile);
+    void fWriteUpgradeLogs(const QString &lManifestFile);
 
   public slots:
     void fCreatePackage();

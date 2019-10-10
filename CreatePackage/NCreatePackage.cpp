@@ -12,6 +12,7 @@
 #include <QMap>
 #include <QMessageBox>
 #include <QModelIndexList>
+#include <QSettings>
 #include <QSortFilterProxyModel>
 #include <QStandardItem>
 #include <QStandardItemModel>
@@ -29,6 +30,7 @@ const QString cLibrariesDirectory("Libraries");
 const QString cModulesDirectory("Modules");
 const QString cExec("Exec");
 const QString cTempDir("Temp");
+const QString cHashAlgorithm("Sha256");
 
 NCreatePackage::NCreatePackage(QWidget* parent)
          : QWidget(parent) {
@@ -40,7 +42,7 @@ NCreatePackage::NCreatePackage(QWidget* parent)
 
 void NCreatePackage::fCreateModel() {
   QStringList lHeaders;
-  lHeaders << tr("Relative Directory") << tr("File Name") << tr("Size") << tr("Hash - Sha256 Base64");
+  lHeaders << tr("Relative Directory") << tr("File Name") << tr("Size") << tr("Hash - Sha256");
   pFileModel = new QStandardItemModel(0, 4, this);
   pFileModel->setHorizontalHeaderLabels(lHeaders);
 
@@ -234,7 +236,7 @@ bool NCreatePackage::fProcessFiles(const QDir& lDir, const QString& lRelativePat
       return false;
     }
     QByteArray lFileContents = lFilePath.readAll();
-    QString lHash = QString(QCryptographicHash::hash(lFileContents,QCryptographicHash::Sha256).toBase64());
+    QString lHash = QString(QCryptographicHash::hash(lFileContents,QCryptographicHash::Sha256).toHex());
     QStandardItem* lDirectory = new QStandardItem(lRelativePath);
     lDirectory->setData(lDir.path(), Qt::ToolTipRole);
     QStandardItem* lFileName = new QStandardItem(lFile);
@@ -263,7 +265,7 @@ bool NCreatePackage::fProcessDirectories(const QDir& lDir) {
       return false;
     }
     QByteArray lFileContents = lFilePath.readAll();
-    QString lHash = QString(QCryptographicHash::hash(lFileContents,QCryptographicHash::Sha256).toBase64());
+    QString lHash = QString(QCryptographicHash::hash(lFileContents,QCryptographicHash::Sha256).toHex());
     QStandardItem* lDirectory = new QStandardItem(".");
     lDirectory->setData(lDir.path(), Qt::ToolTipRole);
     QStandardItem* lFileName = new QStandardItem(lFile);
@@ -337,6 +339,33 @@ bool NCreatePackage::fCheckUIStatus() const
   return true;
 }
 
+void NCreatePackage::fWritePackageSummary(const QString& lManifestFile) {
+  QSettings lManifest(lManifestFile, QSettings::IniFormat);
+  lManifest.beginGroup(QString("PackageSummary"));
+  lManifest.setValue("Name", cbxSoftware->currentText());
+  lManifest.setValue("ReleaseDate", dedDate->date().toString("yyyy-MM-dd"));
+  lManifest.setValue("Priority", cbxPriority->currentText());
+  lManifest.setValue("VersionName", ledName->text());
+  lManifest.setValue("VersionNumber", ledVersion->text());
+  lManifest.setValue("UpgradeNotes", txtDescription->toPlainText());
+  lManifest.setValue("Platform", cbxPlatform->currentText());
+  lManifest.endGroup();
+}
+
+void NCreatePackage::fWriteUpgradeLogs(const QString &lManifestFile) {
+   QSettings lManifest(lManifestFile, QSettings::IniFormat);
+   lManifest.beginGroup(QString("UpgradeLogs"));
+   for(int i = 0; i < pLogModel->rowCount(); i++) {
+     QString lNumber(QString("%1").arg(i, 3, 10, QChar('0')));
+     QString lComponent(pLogModel->data(pLogModel->index(i,0), Qt::DisplayRole).toString());
+     QString lType(pLogModel->data(pLogModel->index(i,1), Qt::DisplayRole).toString());
+     QString lLog(pLogModel->data(pLogModel->index(i,2), Qt::DisplayRole).toString());
+     QString lLogEntry(QString("[%1][%2] - %3").arg(lType).arg(lComponent).arg(lLog));
+     lManifest.setValue(lNumber, lLogEntry);
+   }
+   lManifest.endGroup();
+}
+
 void NCreatePackage::fCreatePackage() {
   QString lPackageName(QString("%1_%2_%3").arg(cbxSoftware->currentText()).arg(cbxPlatform->currentText()).arg(ledVersion->text()));
   QString lCreatePackageDirectory = QString("%1/%2").arg(mCreatePackageDirectory).arg(lPackageName);
@@ -360,7 +389,13 @@ void NCreatePackage::fCreatePackage() {
     QStringList lExecFiles;
     QStringList lLibDirectories;
     QStringList lModuleDirectories;
-    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Scanning files and creating temporal directory ... Task (1/5)")));
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Scanning files and creating temporal directory ... Task (1/6)")));
+
+    QString lManifestFileName(QString("%1/%2.manifest").arg(lCreatePackageDirectory).arg(lPackageName));
+    fWritePackageSummary(lManifestFileName);
+    fWriteUpgradeLogs(lManifestFileName);
+    QSettings lManifest(lManifestFileName, QSettings::IniFormat);
+
     for(int i = 0; i < pFileModel->rowCount(); i++) {
       QString lRelativeFileDirectory(pFileModel->data(pFileModel->index(i,0), Qt::DisplayRole).toString());
       if(lRelativeFileDirectory.section('/',0,0) == cLibrariesDirectory) {
@@ -402,30 +437,74 @@ void NCreatePackage::fCreatePackage() {
         return;
       }
     }
-    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating package for executables ... Task (2/5)")));
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating package for executables ... Task (2/6)")));
     qApp->processEvents();
-    JlCompress::compressFiles(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cExec).arg(QString("%1_%2_%3_%4").arg(cbxSoftware->currentText()).arg(cExec).arg(cbxPlatform->currentText()).arg(ledVersion->text())), lExecFiles);
-    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating package for manual download ... Task (3/5)")));
+    QString lExecFileName(QString("%1_%2_%3_%4.zip").arg(cbxSoftware->currentText()).arg(cExec).arg(cbxPlatform->currentText()).arg(ledVersion->text()));
+    JlCompress::compressFiles(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cExec).arg(lExecFileName), lExecFiles);
+    lManifest.beginGroup(QString("%1_%2").arg(cHashAlgorithm).arg("ExecHash"));
+    lManifest.setValue(lExecFileName, QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cExec).arg(lExecFileName)).toHex()));
+    lManifest.endGroup();
+
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating package for manual download ... Task (3/6)")));
     qApp->processEvents();
     JlCompress::compressDir(QString("%1/%2.zip").arg(lCreatePackageDirectory).arg(lPackageName), QString("%1/%2").arg(lCreatePackageDirectory).arg(cTempDir));
-    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating library packages ... Task (4/5)")));
+    lManifest.beginGroup(QString("%1_%2").arg(cHashAlgorithm).arg("PackageHash"));
+    lManifest.setValue(lPackageName, QString(fFileChecksum(QString("%1/%2.zip").arg(lCreatePackageDirectory).arg(lPackageName)).toHex()));
+    lManifest.endGroup();
+
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating library packages ... Task (4/6)")));
     qApp->processEvents();
+    lManifest.beginGroup(QString("%1_%2").arg(cHashAlgorithm).arg("LibraryHashes"));
     for(const QString& lLibrary : lLibDirectories) {
       QStringList lLibraryList(lLibrary.split('/'));
-      QString lLibraryName(QString("Library_%1_%2_%3").arg(lLibraryList.at(1)).arg(lLibraryList.at(2)).arg(lLibraryList.size() >= 4 ? lLibraryList.at(3) : ledVersion->text()));
+      QString lLibraryName(QString("Library_%1_%2_%3.zip").arg(lLibraryList.at(1)).arg(lLibraryList.at(2)).arg(lLibraryList.size() >= 4 ? lLibraryList.at(3) : ledVersion->text()));
       JlCompress::compressDir(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cLibrariesDirectory).arg(lLibraryName), QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(lLibrary));
+      lManifest.setValue(lLibraryName, QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cLibrariesDirectory).arg(lLibraryName)).toHex()));
     }
-    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating module packages ... Task (5/5)")));
+    lManifest.endGroup();
+
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating module packages ... Task (5/6)")));
     qApp->processEvents();
+    lManifest.beginGroup(QString("%1_%2").arg(cHashAlgorithm).arg("ModuleHashes"));
     for(const QString& lModule : lModuleDirectories) {
       QStringList lModuleList(lModule.split('/'));
-      QString lModuleName(QString("Module_%1_%2_%3").arg(lModuleList.at(1)).arg(lModuleList.at(2)).arg(lModuleList.size() >= 4 ? lModuleList.at(3) : ledVersion->text()));
+      QString lModuleName(QString("Module_%1_%2_%3.zip").arg(lModuleList.at(1)).arg(lModuleList.at(2)).arg(lModuleList.size() >= 4 ? lModuleList.at(3) : ledVersion->text()));
       JlCompress::compressDir(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cModulesDirectory).arg(lModuleName), QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(lModule));
+      lManifest.setValue(lModuleName, QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cModulesDirectory).arg(lModuleName)).toHex()));
     }
+
+    rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Cleaning up ... Task (6/6)")));
+    qApp->processEvents();
+    lCurrentDir.setPath(QString("%1/%2").arg(lCreatePackageDirectory).arg(cTempDir));
+    if(!lCurrentDir.removeRecursively()) {
+      QString lMessage(tr("Directory '%1' couldn't be removed.").arg(cTempDir));
+      emit sEventGenerated(5002041,lMessage, NMessage::ErrorMessage);
+      return;
+    }
+
     QString lMessage(tr("Package '%1' has been created successfully.").arg(lCreatePackageDirectory));
     emit sEventGenerated(5002035,lMessage, NMessage::SuccessMessage);
     rCompressingDialog->deleteLater();
   }
+}
+
+QByteArray NCreatePackage::fFileChecksum(const QString& lFileName) {
+  QFile lFile(lFileName);
+  if(lFile.open(QFile::ReadOnly)) {
+    QCryptographicHash lHash(QCryptographicHash::Sha256);
+    if(lHash.addData(&lFile)) {
+      return lHash.result();
+    }
+    else {
+      QString lMessage(tr("Hash of file '%1' couldn't be calculated.").arg(lFileName));
+      emit sEventGenerated(5002042,lMessage, NMessage::ErrorMessage);
+    }
+  }
+  else {
+    QString lMessage(tr("File '%1' couldn't be opened.").arg(lFileName));
+    emit sEventGenerated(5002043,lMessage, NMessage::ErrorMessage);
+  }
+  return QByteArray();
 }
 
 bool NCreatePackage::fCreatePackageDirectory(const QString& lPath) {
