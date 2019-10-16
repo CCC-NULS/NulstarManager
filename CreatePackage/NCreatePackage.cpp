@@ -23,22 +23,31 @@
 #include <JlCompress.h>
 #include <NConstants.h>
 #include <NValidatorCreator.h>
-
+#include <string.h>
 #include "NCreatePackage.h"
+
+#include<iostream>
+#include<stdio.h>
 
 const QString cLibrariesDirectory("Libraries");
 const QString cModulesDirectory("Modules");
 const QString cExec("Exec");
 const QString cTempDir("Temp");
 const QString cHashAlgorithm("Sha256");
+const QString cFile_PrivateKey("PrivateKey.txt");
 
 NCreatePackage::NCreatePackage(QWidget* parent)
          : QWidget(parent) {
   setupUi(this);
   fCreateModel();  
   fCreateValidators();
+  rContextSign = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+  rContextVerify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
 }
 
+NCreatePackage::~NCreatePackage() {
+
+}
 
 void NCreatePackage::fCreateModel() {
   QStringList lHeaders;
@@ -114,6 +123,19 @@ void NCreatePackage::fSetStatus(QLineEdit* rLineEdit, bool fStatus) {
   }
   rLineEdit->setStyleSheet(QString("background-color: rgb%1").arg(NConstants::colorToRgbText(lColor)));
   pbtCreatePackage->setEnabled(fCheckUIStatus());
+}
+
+QString NCreatePackage::fGetStringFromUnsignedChar(unsigned char* rStr) {
+  QString lResult = "";
+  QString lStr;
+  int lLength = strlen( reinterpret_cast<const char*>(rStr) );
+  for(int i = 0; i < lLength; i++) {
+    lStr = QString( "%1" ).arg( rStr[i], 0, 16 );
+    if(lStr.length() == 1)
+      lResult.append("0");
+    lResult.append(lStr);
+  }
+  return lResult;
 }
 
 void NCreatePackage::fLoadFiles() {
@@ -256,7 +278,6 @@ bool NCreatePackage::fProcessFiles(const QDir& lDir, const QString& lRelativePat
 
 bool NCreatePackage::fProcessDirectories(const QDir& lDir) {
   QStringList lFileEntries = lDir.entryList(QDir::Files | QDir::CaseSensitive | QDir::NoSymLinks);
-  //QStringList lDirEntries = lDir.entryList(QDir::Dirs | QDir::CaseSensitive | QDir::NoSymLinks | QDir::NoDotAndDotDot);
   for(const QString& lFile : lFileEntries) {
     QFile lFilePath(QString("%1/%2").arg(lDir.path()).arg(lFile));
     if(!lFilePath.open(QIODevice::ReadOnly)) {
@@ -340,16 +361,22 @@ bool NCreatePackage::fCheckUIStatus() const
 }
 
 void NCreatePackage::fWritePackageSummary(const QString& lManifestFile) {
+  lContentsHeaderToSign.clear();
+  QStringList lHeaderData;
   QSettings lManifest(lManifestFile, QSettings::IniFormat);
   lManifest.beginGroup(QString("PackageSummary"));
-  lManifest.setValue("Name", cbxSoftware->currentText());
-  lManifest.setValue("ReleaseDate", dedDate->date().toString("yyyy-MM-dd"));
-  lManifest.setValue("Priority", cbxPriority->currentText());
-  lManifest.setValue("VersionName", ledName->text());
-  lManifest.setValue("VersionNumber", ledVersion->text());
-  lManifest.setValue("UpgradeNotes", txtDescription->toPlainText());
+  lManifest.setValue("Name", cbxSoftware->currentText());  
   lManifest.setValue("Platform", cbxPlatform->currentText());
+  lManifest.setValue("Priority", cbxPriority->currentText());
+  lManifest.setValue("ReleaseDate", dedDate->date().toString("yyyy-MM-dd"));
+  lManifest.setValue("VersionName", ledName->text());
+  lManifest.setValue("VersionNumber", ledVersion->text());  
+  lManifest.setValue("UpgradeNotes", txtDescription->toPlainText());  
   lManifest.endGroup();
+
+  lHeaderData << "Name" << cbxSoftware->currentText() << "Platform" << cbxPlatform->currentText() << "Priority" << cbxPriority->currentText() << "ReleaseDate" << dedDate->date().toString("yyyy-MM-dd") << "VersionName" << ledName->text() << "VersionNumber" << ledVersion->text();
+  lContentsHeaderToSign = lHeaderData.join("");
+  lContentsHeaderToSign.replace(" ", "");
 }
 
 void NCreatePackage::fWriteUpgradeLogs(const QString &lManifestFile) {
@@ -366,7 +393,92 @@ void NCreatePackage::fWriteUpgradeLogs(const QString &lManifestFile) {
    lManifest.endGroup();
 }
 
+void NCreatePackage::fCreateSignature(const QString &lManifestFile) {
+  secp256k1_ecdsa_signature* rSignature = new secp256k1_ecdsa_signature();
+  secp256k1_pubkey* rPub = new secp256k1_pubkey();
+
+  QString lContentToHash = lContentsHeaderToSign;
+  QMapIterator<QString, QString> i(lContentsToSign);
+   while (i.hasNext()) {
+     i.next();
+     QString lValue = QString("%1%2").arg(i.key()).arg(i.value());
+     lValue.replace(" ","");
+     lContentToHash.append(lValue);
+   }
+  QCryptographicHash lManifestHash(QCryptographicHash::Sha256);
+  lManifestHash.addData(lContentToHash.toLatin1());
+  QString lManifestHashString(QString::fromLatin1(lManifestHash.result().toHex()));
+  unsigned char lManifestHashChar[1000];
+  memcpy(lManifestHashChar, lManifestHashString.toStdString().c_str(), lManifestHashString.size());
+  lManifestHashChar[lManifestHashString.size()] = 0;
+qDebug((char*) lManifestHashChar);
+
+  QSettings lPrivateKeySettings(cFile_PrivateKey, QSettings::IniFormat);
+  lPrivateKeySettings.beginGroup(QString("Signing"));
+  QString lKey = lPrivateKeySettings.value("PrivateKey").toString();
+  lPrivateKeySettings.endGroup();
+
+  unsigned char lPrivateKeyChar[1000];
+  memcpy(lPrivateKeyChar, lKey.toStdString().c_str(), lKey.size());
+  lPrivateKeyChar[lKey.size()] = 0;
+qDebug((char*) lPrivateKeyChar);
+
+  if(secp256k1_ecdsa_sign(rContextSign, rSignature,  lManifestHashChar, lPrivateKeyChar, nullptr, nullptr) != 1) {
+    QString lMessage(tr("Failed to sign manifest hash!"));
+    emit sEventGenerated(5002050,lMessage, NMessage::ErrorMessage);
+    return;
+  }
+  QString lSign(fGetStringFromUnsignedChar(rSignature->data));
+qDebug(lSign.toLatin1());
+
+  if(secp256k1_ec_pubkey_create(rContextSign, rPub, lPrivateKeyChar) != 1) {
+    QString lMessage(tr("Failed to create public key!"));
+    emit sEventGenerated(5002051,lMessage, NMessage::ErrorMessage);
+    return;
+  }
+
+/*  uint8_t pubkey_serialized[33];
+    size_t pubkeylen = sizeof(pubkey);
+    secp256k1_ec_pubkey_serialize(ctx, pubkey_serialized, &pubkeylen, &pubkey,*/
+
+  unsigned char lPublicKeyChar[65];
+  size_t lPublicKeyLength = sizeof(lPublicKeyChar);
+  secp256k1_ec_pubkey_serialize(rContextSign, lPublicKeyChar, &lPublicKeyLength, rPub, SECP256K1_EC_UNCOMPRESSED);
+qDebug((char*) lPublicKeyChar);
+  QString lPub(fGetStringFromUnsignedChar(lPublicKeyChar));
+qDebug(lPub.toLatin1());
+
+  QSettings lManifest(lManifestFile, QSettings::IniFormat);
+  lManifest.beginGroup(QString("Validation"));
+  lManifest.setValue("ManifestnHash", lManifestHashString);
+  lManifest.setValue("HashSignature", lSign);
+  lManifest.setValue("PublicKey", lPub);
+  lManifest.endGroup();
+
+
+QString lPubTest(lManifest.value("Validation/PublicKey").toString());
+unsigned char lPubTestChar[65];
+memcpy(lPubTestChar, lPubTest.toStdString().c_str(), lPubTest.size());
+//lPubTestChar[lPubTest.size()] = 0;
+qDebug((char*) lPubTestChar);
+
+
+secp256k1_pubkey lPub1;
+if(secp256k1_ec_pubkey_parse(rContextSign, &lPub1, /*lPublicKeyChar*/ lPubTestChar, 65)) {
+         qDebug("yeees555");
+}
+else
+           qDebug("nooo67667");
+
+      if(secp256k1_ecdsa_verify(rContextVerify, rSignature, lManifestHashChar, rPub) == 1) {
+       qDebug("yeees");
+      }
+      else
+       qDebug("nooo");
+}
+
 void NCreatePackage::fCreatePackage() {
+  lContentsToSign.clear();
   QString lPackageName(QString("%1_%2_%3").arg(cbxSoftware->currentText()).arg(cbxPlatform->currentText()).arg(ledVersion->text()));
   QString lCreatePackageDirectory = QString("%1/%2").arg(mCreatePackageDirectory).arg(lPackageName);
   if(fCreatePackageDirectory(lCreatePackageDirectory)) {
@@ -442,14 +554,18 @@ void NCreatePackage::fCreatePackage() {
     QString lExecFileName(QString("%1_%2_%3_%4.zip").arg(cbxSoftware->currentText()).arg(cExec).arg(cbxPlatform->currentText()).arg(ledVersion->text()));
     JlCompress::compressFiles(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cExec).arg(lExecFileName), lExecFiles);
     lManifest.beginGroup(QString("%1_%2").arg(cHashAlgorithm).arg("ExecHash"));
-    lManifest.setValue(lExecFileName, QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cExec).arg(lExecFileName)).toHex()));
+    QString lExecHash(QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cExec).arg(lExecFileName)).toHex()));
+    lManifest.setValue(lExecFileName, lExecHash);
+    lContentsToSign.insert(lExecFileName, lExecHash);
     lManifest.endGroup();
 
     rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating package for manual download ... Task (3/6)")));
     qApp->processEvents();
     JlCompress::compressDir(QString("%1/%2.zip").arg(lCreatePackageDirectory).arg(lPackageName), QString("%1/%2").arg(lCreatePackageDirectory).arg(cTempDir));
     lManifest.beginGroup(QString("%1_%2").arg(cHashAlgorithm).arg("PackageHash"));
-    lManifest.setValue(lPackageName, QString(fFileChecksum(QString("%1/%2.zip").arg(lCreatePackageDirectory).arg(lPackageName)).toHex()));
+    QString lPackageHash(QString(fFileChecksum(QString("%1/%2.zip").arg(lCreatePackageDirectory).arg(lPackageName)).toHex()));
+    lManifest.setValue(lPackageName, lPackageHash);
+    lContentsToSign.insert(lPackageName, lPackageHash);
     lManifest.endGroup();
 
     rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Creating library packages ... Task (4/6)")));
@@ -459,7 +575,9 @@ void NCreatePackage::fCreatePackage() {
       QStringList lLibraryList(lLibrary.split('/'));
       QString lLibraryName(QString("Library_%1_%2_%3.zip").arg(lLibraryList.at(1)).arg(lLibraryList.at(2)).arg(lLibraryList.size() >= 4 ? lLibraryList.at(3) : ledVersion->text()));
       JlCompress::compressDir(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cLibrariesDirectory).arg(lLibraryName), QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(lLibrary));
-      lManifest.setValue(lLibraryName, QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cLibrariesDirectory).arg(lLibraryName)).toHex()));
+      QString lLibraryHash(QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cLibrariesDirectory).arg(lLibraryName)).toHex()));
+      lManifest.setValue(lLibraryName, lLibraryHash);
+      lContentsToSign.insert(lLibraryName, lLibraryHash);
     }
     lManifest.endGroup();
 
@@ -470,7 +588,9 @@ void NCreatePackage::fCreatePackage() {
       QStringList lModuleList(lModule.split('/'));
       QString lModuleName(QString("Module_%1_%2_%3.zip").arg(lModuleList.at(1)).arg(lModuleList.at(2)).arg(lModuleList.size() >= 4 ? lModuleList.at(3) : ledVersion->text()));
       JlCompress::compressDir(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cModulesDirectory).arg(lModuleName), QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cTempDir).arg(lModule));
-      lManifest.setValue(lModuleName, QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cModulesDirectory).arg(lModuleName)).toHex()));
+      QString lModuleHash(QString(fFileChecksum(QString("%1/%2/%3").arg(lCreatePackageDirectory).arg(cModulesDirectory).arg(lModuleName)).toHex()));
+      lManifest.setValue(lModuleName, lModuleHash);
+      lContentsToSign.insert(lModuleName, lModuleHash);
     }
 
     rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Cleaning up ... Task (6/6)")));
@@ -481,7 +601,7 @@ void NCreatePackage::fCreatePackage() {
       emit sEventGenerated(5002041,lMessage, NMessage::ErrorMessage);
       return;
     }
-
+    fCreateSignature(lManifestFileName);
     QString lMessage(tr("Package '%1' has been created successfully.").arg(lCreatePackageDirectory));
     emit sEventGenerated(5002035,lMessage, NMessage::SuccessMessage);
     rCompressingDialog->deleteLater();

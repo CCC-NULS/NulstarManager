@@ -7,8 +7,7 @@ VAVersionValidator::VAVersionValidator(QObject* rParent)
 
 }
 
-QValidator::State VAVersionValidator::validate(QString& lInput, int& lPos) const {
-  bool ok = true;
+QValidator::State VAVersionValidator::validate(QString& lInput, int& /*lPos*/) const {
   if(lInput.simplified().isEmpty())
     return QValidator::Intermediate;
   if(lInput.contains(" "))

@@ -3,8 +3,10 @@
 
 #include <QDir>
 #include <QFile>
+#include <QMap>
 #include <QWidget>
 #include <NMessage.h>
+#include <secp256k1.h>
 
 #include "CreatePackage.h"
 #include "ui_NCreatePackage.h"
@@ -19,6 +21,7 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
 
   public:
     explicit NCreatePackage(QWidget* parent = nullptr);
+    ~NCreatePackage();
     void fCreateModel();
     void fCreateValidators();
     bool fCheckUIStatus() const;
@@ -37,9 +40,15 @@ class CREATEPACKAGESHARED_EXPORT NCreatePackage : public QWidget, private Ui::ui
     QSortFilterProxyModel* pProxyModelFiles;
     QSortFilterProxyModel* pProxyModelLog;
     QString mCreatePackageDirectory;
+    secp256k1_context* rContextSign = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+    secp256k1_context* rContextVerify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+    QString fGetStringFromUnsignedChar(unsigned char* rStr);
+    QString lContentsHeaderToSign;
+    QMap<QString,QString> lContentsToSign;
     void fSetStatus(QLineEdit* rLineEdit, bool fStatus);
     void fWritePackageSummary(const QString &lManifestFile);
     void fWriteUpgradeLogs(const QString &lManifestFile);
+    void fCreateSignature(const QString &lManifestFile);
 
   public slots:
     void fCreatePackage();
