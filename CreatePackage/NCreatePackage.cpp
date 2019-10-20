@@ -394,8 +394,8 @@ void NCreatePackage::fWriteUpgradeLogs(const QString &lManifestFile) {
 }
 
 void NCreatePackage::fCreateSignature(const QString &lManifestFile) {
-  secp256k1_ecdsa_signature* rSignature = new secp256k1_ecdsa_signature();
-  secp256k1_pubkey* rPub = new secp256k1_pubkey();
+  secp256k1_ecdsa_signature rSignature;
+  secp256k1_pubkey rPub;
 
   QString lContentToHash = lContentsHeaderToSign;
   QMapIterator<QString, QString> i(lContentsToSign);
@@ -411,7 +411,6 @@ void NCreatePackage::fCreateSignature(const QString &lManifestFile) {
   unsigned char lManifestHashChar[1000];
   memcpy(lManifestHashChar, lManifestHashString.toStdString().c_str(), lManifestHashString.size());
   lManifestHashChar[lManifestHashString.size()] = 0;
-qDebug((char*) lManifestHashChar);
 
   QSettings lPrivateKeySettings(cFile_PrivateKey, QSettings::IniFormat);
   lPrivateKeySettings.beginGroup(QString("Signing"));
@@ -421,60 +420,77 @@ qDebug((char*) lManifestHashChar);
   unsigned char lPrivateKeyChar[1000];
   memcpy(lPrivateKeyChar, lKey.toStdString().c_str(), lKey.size());
   lPrivateKeyChar[lKey.size()] = 0;
-qDebug((char*) lPrivateKeyChar);
 
-  if(secp256k1_ecdsa_sign(rContextSign, rSignature,  lManifestHashChar, lPrivateKeyChar, nullptr, nullptr) != 1) {
+  if(secp256k1_ecdsa_sign(rContextSign, &rSignature,  lManifestHashChar, lPrivateKeyChar, nullptr, nullptr) != 1) {
     QString lMessage(tr("Failed to sign manifest hash!"));
     emit sEventGenerated(5002050,lMessage, NMessage::ErrorMessage);
     return;
   }
-  QString lSign(fGetStringFromUnsignedChar(rSignature->data));
-qDebug(lSign.toLatin1());
+  QString lSign(fGetStringFromUnsignedChar(rSignature.data));
 
-  if(secp256k1_ec_pubkey_create(rContextSign, rPub, lPrivateKeyChar) != 1) {
+
+  if(secp256k1_ec_pubkey_create(rContextSign, &rPub, lPrivateKeyChar) != 1) {
     QString lMessage(tr("Failed to create public key!"));
     emit sEventGenerated(5002051,lMessage, NMessage::ErrorMessage);
     return;
   }
 
-/*  uint8_t pubkey_serialized[33];
-    size_t pubkeylen = sizeof(pubkey);
-    secp256k1_ec_pubkey_serialize(ctx, pubkey_serialized, &pubkeylen, &pubkey,*/
-
-  unsigned char lPublicKeyChar[65];
-  size_t lPublicKeyLength = sizeof(lPublicKeyChar);
-  secp256k1_ec_pubkey_serialize(rContextSign, lPublicKeyChar, &lPublicKeyLength, rPub, SECP256K1_EC_UNCOMPRESSED);
-qDebug((char*) lPublicKeyChar);
-  QString lPub(fGetStringFromUnsignedChar(lPublicKeyChar));
-qDebug(lPub.toLatin1());
+  uint8_t lPublicKeySerialized[65];
+  size_t lPublicKeyLength = sizeof(lPublicKeySerialized);
+  secp256k1_ec_pubkey_serialize(rContextSign, lPublicKeySerialized, &lPublicKeyLength, &rPub, SECP256K1_EC_UNCOMPRESSED);
+  QString lPub(fGetStringFromUnsignedChar(lPublicKeySerialized));
 
   QSettings lManifest(lManifestFile, QSettings::IniFormat);
   lManifest.beginGroup(QString("Validation"));
-  lManifest.setValue("ManifestnHash", lManifestHashString);
+  lManifest.setValue("ManifestHash", lManifestHashString);
   lManifest.setValue("HashSignature", lSign);
   lManifest.setValue("PublicKey", lPub);
+  lManifest.sync();
   lManifest.endGroup();
 
+/*** BLCOK OF CODE TO USE ON UPDATER MODULE
 
+  //// Not working properly - encoding issue
+QSettings lManifest2(lManifestFile, QSettings::IniFormat);
 QString lPubTest(lManifest.value("Validation/PublicKey").toString());
-unsigned char lPubTestChar[65];
+uint8_t lPubTestChar[300];
 memcpy(lPubTestChar, lPubTest.toStdString().c_str(), lPubTest.size());
-//lPubTestChar[lPubTest.size()] = 0;
+lPubTestChar[lPubTest.size()] = 0;
+QString lPub2(fGetStringFromUnsignedChar(lPublicKeySerialized));
+qDebug(lPub2.toLatin1());
 qDebug((char*) lPubTestChar);
+  ///////
 
+static const uint8_t PUBLICKEY[65] = { 0x04, 0xce, 0x88, 0xa6, 0x10, 0xff, 0xbd, 0xdf, 0x52, 0x1e, 0x89, 0x4e, 0xc3, 0x63, 0xe4,
+                                       0xec, 0xaa, 0xa8, 0x16, 0x2c, 0x12, 0x77, 0x88, 0x23, 0xbc, 0x75, 0x51, 0x3f, 0x5d, 0xed,
+                                       0x33, 0x04, 0xdb, 0xf1, 0x9e, 0xa8, 0x17, 0x72, 0x04, 0xf8, 0x86, 0xab, 0x53, 0xd9, 0x01,
+                                       0xe7, 0x16, 0x55, 0xbb, 0x20, 0x8d, 0xf9, 0x0e, 0xd2, 0x84, 0x38, 0x18, 0x2e, 0x50, 0xa3,
+                                       0xfa, 0x57, 0x9e, 0x2f, 0xc3 };
 
 secp256k1_pubkey lPub1;
-if(secp256k1_ec_pubkey_parse(rContextSign, &lPub1, /*lPublicKeyChar*/ lPubTestChar, 65)) {
+if(secp256k1_ec_pubkey_parse(rContextSign, &lPub1, lPublicKeySerialized, 65)) {
          qDebug("yeees555");
 }
 else
            qDebug("nooo67667");
+if(secp256k1_ec_pubkey_parse(rContextSign, &lPub1, PUBLICKEY lPubTestChar, 65)) {
+         qDebug("yeees666");
+}
+else
+           qDebug("nooo6888");
 
-      if(secp256k1_ecdsa_verify(rContextVerify, rSignature, lManifestHashChar, rPub) == 1) {
+      if(secp256k1_ecdsa_verify(rContextVerify, &rSignature, lManifestHashChar, &rPub) == 1) {
        qDebug("yeees");
       }
       else
        qDebug("nooo");
+
+      if(secp256k1_ecdsa_verify(rContextVerify, &rSignature, lManifestHashChar, &rPub) == 1) {
+       qDebug("yeees");
+      }
+      else
+       qDebug("nooo");
+*/
 }
 
 void NCreatePackage::fCreatePackage() {
