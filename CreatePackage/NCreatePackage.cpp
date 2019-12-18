@@ -519,7 +519,7 @@ void NCreatePackage::fCreatePackage() {
     QStringList lModuleDirectories;
     rText->setText(QString("%1%2").arg(lProcessingText).arg(tr("Scanning files and creating temporal directory ... Task (1/6)")));
 
-    QString lManifestFileName(QString("%1/%2.manifest").arg(lCreatePackageDirectory).arg(lPackageName));
+    QString lManifestFileName(QString("Version.manifest").arg(lCreatePackageDirectory).arg(lPackageName));
     fWritePackageSummary(lManifestFileName);
     fWriteUpgradeLogs(lManifestFileName);
     QSettings lManifest(lManifestFileName, QSettings::IniFormat);
